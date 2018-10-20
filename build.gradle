@@ -1,0 +1,69 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+group = 'io.digdag.plugin'
+version = '0.1.3'
+
+def digdagVersion = '0.9.12'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url 'https://dl.bintray.com/digdag/maven'
+    }
+}
+
+configurations {
+    provided
+}
+
+dependencies {
+    provided 'io.digdag:digdag-spi:' + digdagVersion
+    // provided 'io.digdag:digdag-standards:' + digdagVersion
+    provided 'io.digdag:digdag-plugin-utils:' + digdagVersion  // this should be 'compile' once digdag 0.8.2 is released to a built-in repository
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+        test.compileClasspath += configurations.provided
+        test.runtimeClasspath += configurations.provided
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            // artifactId 'project1-sample'        
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "$buildDir/repo"
+        }
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+javadoc {
+    options {
+        locale = 'en_US'
+        encoding = 'UTF-8'
+    }
+}
+
