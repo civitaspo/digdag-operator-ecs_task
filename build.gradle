@@ -26,6 +26,11 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.scala-lang/scala-library
     compile group: 'org.scala-lang', name: 'scala-library', version: scalaSemanticVersion
+
+    ['ecs', 's3', 'sts'].each { svc ->
+        // https://mvnrepository.com/artifact/com.amazonaws/
+        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.433'
+    }
 }
 
 shadowJar {
