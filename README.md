@@ -74,7 +74,7 @@ In addition, the below configurations exist.
 - **def**: The definition for the task. The configuration is the same as `ecs_task.register>`'s one. (map, optional)
   - **NOTE**: **task_definition** is required on the [RunTask API Doc](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html), but it is not required if the **def** is defined.
 - **result_s3_uri_prefix**: The S3 uri prefix for the task result. (string, optional)
-  - **NOTE**: This configuration is used by `ecs_task.load_result>` operator, so the result content must follow the rule.
+  - **NOTE**: This configuration is used by `ecs_task.result>` operator, so the result content must follow the rule.
 - **timeout**: Timeout duration for the task. (`DurationParam`, default: `15m`)
 
 ## Configuration for `ecs_task.wait>` operator
@@ -86,9 +86,9 @@ In addition, the below configurations exist.
 - **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: )
 - **ignore_failure**: Ignore even if any tasks exit with the code except 0. (boolean, default: `false`) 
 
-## Configuration for `ecs_task.load_result>` operator
+## Configuration for `ecs_task.result>` operator
 
-- **result_s3_uri**: S3 URI that the result is stored. (string, required)
+- **s3_uri**: S3 URI that the result is stored. (string, required)
   - **NOTE**: The result content must follow the below rule.
     - the format is json.
     - the keys are `"subtask_config"`, `"export_params"`, `"store_params"`.
