@@ -11,7 +11,7 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
   val cluster: String = params.get("cluster", classOf[String])
-  val tasks: Seq[String] = params.getListOrEmpty("tasks", classOf[String]).asScala
+  val tasks: Seq[String] = params.parseList("tasks", classOf[String]).asScala
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
   val condition: String = params.get("condition", classOf[String], "all")
   val status: String = params.get("status", classOf[String], "STOPPED")
