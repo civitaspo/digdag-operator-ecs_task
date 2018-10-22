@@ -26,6 +26,7 @@ import com.amazonaws.services.ecs.model.{
   Volume,
   VolumeFrom
 }
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Optional
 import com.google.common.collect.ImmutableList
 import io.digdag.client.config.{Config, ConfigKey}
@@ -34,8 +35,13 @@ import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
 import scala.collection.JavaConverters._
 
-class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+class EcsTaskRegisterOperator(
+  operatorName: String,
+  context: OperatorContext,
+  systemConfig: Config,
+  templateEngine: TemplateEngine,
+  objectMapper: ObjectMapper
+) extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine, objectMapper) {
 
   protected val config: Config = params.getNested("_command")
 

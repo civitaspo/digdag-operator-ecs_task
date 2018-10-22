@@ -1,12 +1,13 @@
 package pro.civitaspo.digdag.plugin.ecs_task.run
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Optional
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import io.digdag.util.DurationParam
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
-class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine, objectMapper: ObjectMapper)
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine, objectMapper) {
 
   val cluster: String = params.get("cluster", classOf[String])
   val taskDef: Optional[Config] = params.getOptionalNested("def")

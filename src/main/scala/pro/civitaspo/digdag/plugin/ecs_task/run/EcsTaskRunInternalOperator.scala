@@ -12,6 +12,7 @@ import com.amazonaws.services.ecs.model.{
   RunTaskResult,
   TaskOverride
 }
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.base.Optional
 import com.google.common.collect.ImmutableList
 import io.digdag.client.config.{Config, ConfigKey}
@@ -20,8 +21,13 @@ import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
 import scala.collection.JavaConverters._
 
-class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+class EcsTaskRunInternalOperator(
+  operatorName: String,
+  context: OperatorContext,
+  systemConfig: Config,
+  templateEngine: TemplateEngine,
+  objectMapper: ObjectMapper
+) extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine, objectMapper) {
 
   val cluster: String = params.get("cluster", classOf[String])
   val count: Optional[Int] = params.getOptional("count", classOf[Int])
