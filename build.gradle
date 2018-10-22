@@ -1,14 +1,16 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
+plugins {
+    id 'scala'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id "com.diffplug.gradle.spotless" version "3.13.0"
+}
 
-apply plugin: 'eclipse'
-apply plugin: 'idea'
+group = 'pro.civitaspo'
+version = '0.0.1'
 
-group = 'io.digdag.plugin'
-version = '0.1.3'
-
-def digdagVersion = '0.9.12'
+def digdagVersion = '0.9.31'
+def scalaSemanticVersion = "2.12.6"
+def depScalaVersion = "2.12"
 
 repositories {
     mavenCentral()
@@ -18,29 +20,30 @@ repositories {
     }
 }
 
-configurations {
-    provided
-}
-
 dependencies {
-    provided 'io.digdag:digdag-spi:' + digdagVersion
-    // provided 'io.digdag:digdag-standards:' + digdagVersion
-    provided 'io.digdag:digdag-plugin-utils:' + digdagVersion  // this should be 'compile' once digdag 0.8.2 is released to a built-in repository
+    compile group: 'io.digdag', name: 'digdag-spi', version: digdagVersion
+    compile group: 'io.digdag', name: 'digdag-plugin-utils', version: digdagVersion
+
+    // https://mvnrepository.com/artifact/org.scala-lang/scala-library
+    compile group: 'org.scala-lang', name: 'scala-library', version: scalaSemanticVersion
+
+    ['ecs', 's3', 'sts'].each { svc ->
+        // https://mvnrepository.com/artifact/com.amazonaws/
+        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.433'
+    }
 }
 
-sourceSets {
-    main {
-        compileClasspath += configurations.provided
-        test.compileClasspath += configurations.provided
-        test.runtimeClasspath += configurations.provided
+shadowJar {
+    classifier = null
+    dependencies {
+        exclude(dependency('io.digdag:.*'))
     }
 }
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            // artifactId 'project1-sample'        
-            from components.java
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
         }
     }
     repositories {
@@ -50,20 +53,16 @@ publishing {
     }
 }
 
+spotless {
+    scala {
+        scalafmt('1.5.1').configFile('.scalafmt.conf')
+    }
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-}
-
-javadoc {
-    options {
-        locale = 'en_US'
-        encoding = 'UTF-8'
-    }
-}
+compileScala.options.encoding = 'UTF-8'
+compileTestScala.options.encoding = 'UTF-8'
+compileScala.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 
