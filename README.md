@@ -63,7 +63,7 @@ Define the below options on properties (which is indicated by `-c`, `--config`).
 
 ## Configuration for `ecs_task.register>` operator
 
-The configuration is the same as the snake-cased [RegisterTaskDefinition API](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html)
+- **ecs_task.register>**: The configuration is the same as the snake-cased [RegisterTaskDefinition API](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html) (map, required)
 
 ## Configuration for `ecs_task.run>` operator
 

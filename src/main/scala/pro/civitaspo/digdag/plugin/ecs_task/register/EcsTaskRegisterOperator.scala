@@ -37,22 +37,24 @@ import scala.collection.JavaConverters._
 class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
-  val containerDefinitions: Seq[ContainerDefinition] =
-    params.getList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
-  val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
-  val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
-  val family: String = params.get("family", classOf[String])
-  val memory: Optional[String] = params.getOptional("memory", classOf[String])
-  val networkMode: Optional[NetworkMode] = params.getOptional("network_mode", classOf[NetworkMode])
+  protected val config: Config = params.getNested("_command")
 
-  val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
-    params.getListOrEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
-  val requiresCompatibilities: Seq[String] = params.getListOrEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
-  val taskRoleArn: Optional[String] = params.getOptional("task_role_arn", classOf[String])
-  val volumes: Seq[Volume] = params.getListOrEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
-
-  protected def buildRegisterTaskDefinitionRequest(): RegisterTaskDefinitionRequest = {
+  protected def buildRegisterTaskDefinitionRequest(c: Config): RegisterTaskDefinitionRequest = {
     val req: RegisterTaskDefinitionRequest = new RegisterTaskDefinitionRequest()
+
+    val containerDefinitions: Seq[ContainerDefinition] =
+      c.getList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
+    val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
+    val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
+    val family: String = c.get("family", classOf[String])
+    val memory: Optional[String] = c.getOptional("memory", classOf[String])
+    val networkMode: Optional[NetworkMode] = c.getOptional("network_mode", classOf[NetworkMode])
+
+    val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
+      c.getListOrEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
+    val requiresCompatibilities: Seq[String] = c.getListOrEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
+    val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
+    val volumes: Seq[Volume] = c.getListOrEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
 
     req.setContainerDefinitions(containerDefinitions.asJava)
     if (cpu.isPresent) req.setCpu(cpu.get)
@@ -386,9 +388,9 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   }
 
   override def runTask(): TaskResult = {
-    val req: RegisterTaskDefinitionRequest = buildRegisterTaskDefinitionRequest()
+    val req: RegisterTaskDefinitionRequest = buildRegisterTaskDefinitionRequest(config)
     logger.debug(req.toString)
-    val result: RegisterTaskDefinitionResult = aws.withEcs(_.registerTaskDefinition(buildRegisterTaskDefinitionRequest()))
+    val result: RegisterTaskDefinitionResult = aws.withEcs(_.registerTaskDefinition(req))
     logger.debug(result.toString)
 
     val paramsToStore = cf.create()
