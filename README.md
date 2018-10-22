@@ -10,7 +10,37 @@ digdag plugin for AWS ECS Task.
 # Usage
 
 ```yaml
-TBD...
+_export:
+  plugin:
+    repositories:
+      - https://jitpack.io
+    dependencies:
+      - pro.civitaspo:digdag-operator-ecs_task:0.0.1
+  ecs_task:
+    auth_method: profile
+
++step0:
+  sh>: echo '{"store_params":{"civi":"taspo"}}' | aws s3 cp - ${output}
+
++step1:
+  ecs_task.run>:
+  def:
+    network_mode: Host
+    container_definitions:
+      - name: uploader
+        image: amazonlinux:2
+        command: [yum, install, '-y', awscli]
+        essential: true
+        memory: 500
+        cpu: 10
+    family: hello_world
+  cluster: ${cluster}
+  count: 1
+  result_s3_uri: ${output}
+
++step2:
+  echo>: ${civi}
+
 ```
 
 # Configuration
