@@ -10,7 +10,37 @@ digdag plugin for AWS ECS Task.
 # Usage
 
 ```yaml
-TBD...
+_export:
+  plugin:
+    repositories:
+      - https://jitpack.io
+    dependencies:
+      - pro.civitaspo:digdag-operator-ecs_task:0.0.1
+  ecs_task:
+    auth_method: profile
+
++step0:
+  sh>: echo '{"store_params":{"civi":"taspo"}}' | aws s3 cp - ${output}
+
++step1:
+  ecs_task.run>:
+  def:
+    network_mode: Host
+    container_definitions:
+      - name: uploader
+        image: amazonlinux:2
+        command: [yum, install, '-y', awscli]
+        essential: true
+        memory: 500
+        cpu: 10
+    family: hello_world
+  cluster: ${cluster}
+  count: 1
+  result_s3_uri: ${output}
+
++step2:
+  echo>: ${civi}
+
 ```
 
 # Configuration
@@ -52,7 +82,7 @@ Define the below options on properties (which is indicated by `-c`, `--config`).
   - `"env"`: uses AWS_ACCESS_KEY_ID (or AWS_ACCESS_KEY) and AWS_SECRET_KEY (or AWS_SECRET_ACCESS_KEY) environment variables.
   - `"instance"`: uses EC2 instance profile.
   - `"profile"`: uses credentials written in a file. Format of the file is as following, where `[...]` is a name of profile.
-    - **profile_file**: path to a profiles file. (string, default: given by AWS_CREDENTIAL_PROFILES_FILE environment varialbe, or ~/.aws/credentials).
+    - **profile_file**: path to a profiles file. (string, default: given by `AWS_CREDENTIAL_PROFILES_FILE` environment varialbe, or ~/.aws/credentials).
     - **profile_name**: name of a profile. (string, default: `"default"`)
   - `"properties"`: uses aws.accessKeyId and aws.secretKey Java system properties.
   - `"anonymous"`: uses anonymous access. This auth method can access only public files.
@@ -63,7 +93,7 @@ Define the below options on properties (which is indicated by `-c`, `--config`).
 
 ## Configuration for `ecs_task.register>` operator
 
-The configuration is the same as the snake-cased [RegisterTaskDefinition API](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html)
+- **ecs_task.register>**: The configuration is the same as the snake-cased [RegisterTaskDefinition API](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html) (map, required)
 
 ## Configuration for `ecs_task.run>` operator
 
@@ -72,9 +102,9 @@ The configuration is the same as the snake-cased [RunTask API](https://docs.aws.
 In addition, the below configurations exist.
 
 - **def**: The definition for the task. The configuration is the same as `ecs_task.register>`'s one. (map, optional)
-  - **NOTE**: **task_definition** is required on the [RunTask API Doc]([RunTask API](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html)), but it is not required if the **def** is defined.
-- **result_s3_uri_prefix**: The S3 uri prefix for the task result. (string, optional)
-  - **NOTE**: This configuration is used by `ecs_task.load_result>` operator, so the result content must follow the rule.
+  - **NOTE**: **task_definition** is required on the [RunTask API Doc](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html), but it is not required if the **def** is defined.
+- **result_s3_uri**: The S3 uri for the task result. (string, optional)
+  - **NOTE**: This configuration is used by `ecs_task.result>` operator, so the result content must follow the rule.
 - **timeout**: Timeout duration for the task. (`DurationParam`, default: `15m`)
 
 ## Configuration for `ecs_task.wait>` operator
@@ -83,12 +113,12 @@ In addition, the below configurations exist.
 - **tasks**: A list of up to 100 task IDs or full ARN entries. (array of string, required)
 - **timeout**: Timeout duration for the tasks. (`DurationParam`, default: `15m`)
 - **condition**: The condition of tasks to wait. Available values are `"all"` or `"any"`. (string, default: `"all"`)
-- **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: )
+- **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED"`)
 - **ignore_failure**: Ignore even if any tasks exit with the code except 0. (boolean, default: `false`) 
 
-## Configuration for `ecs_task.load_result>` operator
+## Configuration for `ecs_task.result>` operator
 
-- **result_s3_uri**: S3 URI that the result is stored. (string, required)
+- **ecs_task.result>**: S3 URI that the result is stored. (string, required)
   - **NOTE**: The result content must follow the below rule.
     - the format is json.
     - the keys are `"subtask_config"`, `"export_params"`, `"store_params"`.
