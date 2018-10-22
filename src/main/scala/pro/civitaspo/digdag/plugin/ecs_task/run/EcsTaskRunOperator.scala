@@ -10,7 +10,7 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
 
   val cluster: String = params.get("cluster", classOf[String])
   val taskDef: Optional[Config] = params.getOptionalNested("def")
-  val resultS3UriPrefix: Optional[String] = params.getOptional("result_s3_uri_prefix", classOf[String])
+  val resultS3Uri: Optional[String] = params.getOptional("result_s3_uri", classOf[String])
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
 
   override def runTask(): TaskResult = {

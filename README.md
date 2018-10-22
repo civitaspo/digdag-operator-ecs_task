@@ -73,7 +73,7 @@ In addition, the below configurations exist.
 
 - **def**: The definition for the task. The configuration is the same as `ecs_task.register>`'s one. (map, optional)
   - **NOTE**: **task_definition** is required on the [RunTask API Doc](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html), but it is not required if the **def** is defined.
-- **result_s3_uri_prefix**: The S3 uri prefix for the task result. (string, optional)
+- **result_s3_uri**: The S3 uri for the task result. (string, optional)
   - **NOTE**: This configuration is used by `ecs_task.result>` operator, so the result content must follow the rule.
 - **timeout**: Timeout duration for the task. (`DurationParam`, default: `15m`)
 
