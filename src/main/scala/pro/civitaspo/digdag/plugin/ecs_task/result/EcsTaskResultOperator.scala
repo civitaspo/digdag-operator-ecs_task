@@ -4,15 +4,14 @@ import java.io.File
 import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.amazonaws.services.s3.transfer.{Download, TransferManager, TransferManagerBuilder}
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
 import scala.io.Source
 
-class EcsTaskResultOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine, objectMapper: ObjectMapper)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine, objectMapper) {
+class EcsTaskResultOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
   object AmazonS3URI {
     def apply(path: String): AmazonS3URI = new AmazonS3URI(path, false)

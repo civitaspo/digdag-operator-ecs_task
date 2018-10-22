@@ -1,6 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.wait
 import com.amazonaws.services.ecs.model.{DescribeTasksRequest, DescribeTasksResult, Failure}
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import io.digdag.util.DurationParam
@@ -8,8 +7,8 @@ import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
 import scala.collection.JavaConverters._
 
-class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine, objectMapper: ObjectMapper)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine, objectMapper) {
+class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
   val cluster: String = params.get("cluster", classOf[String])
   val tasks: Seq[String] = params.parseList("tasks", classOf[String]).asScala

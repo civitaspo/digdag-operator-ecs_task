@@ -1,18 +1,11 @@
 package pro.civitaspo.digdag.plugin.ecs_task
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.digdag.client.config.{Config, ConfigFactory}
 import io.digdag.spi.{OperatorContext, SecretProvider, TemplateEngine}
 import io.digdag.util.{BaseOperator, DurationParam}
 import org.slf4j.{Logger, LoggerFactory}
 import pro.civitaspo.digdag.plugin.ecs_task.aws.{Aws, AwsConf}
 
-abstract class AbstractEcsTaskOperator(
-  operatorName: String,
-  context: OperatorContext,
-  systemConfig: Config,
-  templateEngine: TemplateEngine,
-  objectMapper: ObjectMapper
-)
+abstract class AbstractEcsTaskOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends BaseOperator(context) {
 
   protected val logger: Logger = LoggerFactory.getLogger(operatorName)
