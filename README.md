@@ -1,5 +1,5 @@
 # digdag-operator-ecs_task
-[![Jitpack](https://jitpack.io/v/pro.civitaspo/digdag-operator-ecs_task.svg)](https://jitpack.io/#pro.civitaspo/digdag-operator-ecs_task) [![CircleCI](https://circleci.com/gh/civitaspo/digdag-operator-ecs_task.svg?style=shield)](https://circleci.com/gh/civitaspo/digdag-operator-ecs_task) [![Digdag](https://img.shields.io/badge/digdag-v0.9.27-brightgreen.svg)](https://github.com/treasure-data/digdag/releases/tag/v0.9.31)
+[![Jitpack](https://jitpack.io/v/pro.civitaspo/digdag-operator-ecs_task.svg)](https://jitpack.io/#pro.civitaspo/digdag-operator-ecs_task) [![CircleCI](https://circleci.com/gh/civitaspo/digdag-operator-ecs_task.svg?style=shield)](https://circleci.com/gh/civitaspo/digdag-operator-ecs_task) [![Digdag](https://img.shields.io/badge/digdag-v0.9.31-brightgreen.svg)](https://github.com/treasure-data/digdag/releases/tag/v0.9.31)
 
 digdag plugin for AWS ECS Task.
 
