@@ -54,7 +54,8 @@ case class EcsTaskWaiter(
       override def matches(output: DescribeTasksResult): Boolean = {
         val waitingMillis: Long = System.currentTimeMillis() - startAt
         logger.info(
-          s"Waiting ${waitingMillis}ms for that $condition tasks [${output.getTasks.asScala.map(t => s"${t.getTaskArn}:${t.getLastStatus}").mkString(",")}] become $status.")
+          s"Waiting ${waitingMillis}ms for that $condition tasks [${output.getTasks.asScala.map(t => s"${t.getTaskArn}:${t.getLastStatus}").mkString(",")}] become $status."
+        )
         if (waitingMillis > timeout.getDuration.toMillis) {
           throw new WaiterTimedOutException(s"Reached timeout ${timeout.getDuration.toMillis}ms without transitioning to the desired state")
         }

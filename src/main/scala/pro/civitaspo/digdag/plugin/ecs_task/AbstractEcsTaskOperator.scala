@@ -13,7 +13,8 @@ abstract class AbstractEcsTaskOperator(operatorName: String, context: OperatorCo
   protected val params: Config = {
     val elems: Seq[String] = operatorName.split("\\.")
     elems.indices.foldLeft(request.getConfig) { (p: Config, idx: Int) =>
-      p.mergeDefault((0 to idx).foldLeft(request.getConfig) { (nestedParam: Config, keyIdx: Int) => nestedParam.getNestedOrGetEmpty(elems(keyIdx))
+      p.mergeDefault((0 to idx).foldLeft(request.getConfig) { (nestedParam: Config, keyIdx: Int) =>
+        nestedParam.getNestedOrGetEmpty(elems(keyIdx))
       })
     }
   }

@@ -18,7 +18,8 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
   val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
 
   override def runTask(): TaskResult = {
-    val req: DescribeTasksRequest = new DescribeTasksRequest().withCluster(cluster)
+    val req: DescribeTasksRequest = new DescribeTasksRequest()
+      .withCluster(cluster)
       .withTasks(tasks: _*)
 
     aws.withEcs { ecs =>
