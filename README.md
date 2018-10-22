@@ -83,7 +83,7 @@ In addition, the below configurations exist.
 - **tasks**: A list of up to 100 task IDs or full ARN entries. (array of string, required)
 - **timeout**: Timeout duration for the tasks. (`DurationParam`, default: `15m`)
 - **condition**: The condition of tasks to wait. Available values are `"all"` or `"any"`. (string, default: `"all"`)
-- **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED""`)
+- **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED"`)
 - **ignore_failure**: Ignore even if any tasks exit with the code except 0. (boolean, default: `false`) 
 
 ## Configuration for `ecs_task.result>` operator
