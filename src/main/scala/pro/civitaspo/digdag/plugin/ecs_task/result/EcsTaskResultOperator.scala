@@ -13,7 +13,7 @@ class EcsTaskResultOperator(operatorName: String, context: OperatorContext, syst
     def apply(path: String): AmazonS3URI = new AmazonS3URI(path, false)
   }
 
-  val s3Uri: AmazonS3URI = AmazonS3URI(params.get("s3_uri", classOf[String]))
+  val s3Uri: AmazonS3URI = AmazonS3URI(params.get("_command", classOf[String]))
 
   override def runTask(): TaskResult = {
     val content: S3ObjectInputStream = aws.withS3(_.getObject(s3Uri.getBucket, s3Uri.getKey)).getObjectContent

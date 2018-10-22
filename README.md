@@ -88,7 +88,7 @@ In addition, the below configurations exist.
 
 ## Configuration for `ecs_task.result>` operator
 
-- **s3_uri**: S3 URI that the result is stored. (string, required)
+- **ecs_task.result>**: S3 URI that the result is stored. (string, required)
   - **NOTE**: The result content must follow the below rule.
     - the format is json.
     - the keys are `"subtask_config"`, `"export_params"`, `"store_params"`.

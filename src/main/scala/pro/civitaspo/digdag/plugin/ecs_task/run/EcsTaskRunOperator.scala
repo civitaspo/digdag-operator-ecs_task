@@ -19,6 +19,7 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
     if (taskDef.isPresent) subTasks.setNested("+register", ecsTaskRegisterSubTask())
     subTasks.setNested("+run", ecsTaskRunInternalSubTask())
     subTasks.setNested("+wait", ecsTaskWaitSubTask())
+    if (resultS3Uri.isPresent) subTasks.setNested("+result", ecsTaskResultSubTask())
 
     val builder = TaskResult.defaultBuilder(cf)
     builder.subtaskConfig(subTasks)
@@ -48,6 +49,13 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
       subTask.set("cluster", cluster)
       subTask.set("tasks", "${last_ecs_task_run.task_arns}")
       subTask.set("timeout", timeout.toString)
+    }
+  }
+
+  protected def ecsTaskResultSubTask(): Config = {
+    withDefaultSubTask { subTask =>
+      subTask.set("_type", "ecs_task.result")
+      subTask.set("_command", resultS3Uri.get)
     }
   }
 
