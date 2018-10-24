@@ -17,6 +17,7 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.ecs.{AmazonECS, AmazonECSClientBuilder}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import com.amazonaws.services.s3.transfer.{TransferManager, TransferManagerBuilder}
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest
 import com.google.common.base.Optional
@@ -30,6 +31,14 @@ case class Aws(conf: AwsConf) {
     val s3: AmazonS3 = buildService(AmazonS3ClientBuilder.standard())
     try f(s3)
     finally s3.shutdown()
+  }
+
+  def withTransferManager[R](f: TransferManager => R): R = {
+    withS3 { s3 =>
+      val xfer: TransferManager = TransferManagerBuilder.standard().withS3Client(s3).build()
+      try f(xfer)
+      finally xfer.shutdownNow(false)
+    }
   }
 
   def withEcs[R](f: AmazonECS => R): R = {
