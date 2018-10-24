@@ -2,22 +2,18 @@ package pro.civitaspo.digdag.plugin.ecs_task.result
 import java.io.File
 
 import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.amazonaws.services.s3.transfer.{Download, TransferManager, TransferManagerBuilder}
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
+import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 
 import scala.io.Source
 
 class EcsTaskResultOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
-  object AmazonS3URI {
-    def apply(path: String): AmazonS3URI = new AmazonS3URI(path, false)
-  }
-
-  val s3Uri: AmazonS3URI = AmazonS3URI(params.get("_command", classOf[String]))
+  val s3Uri: AmazonS3URI = AmazonS3UriWrapper(params.get("_command", classOf[String]))
 
   override def runTask(): TaskResult = {
     val f: String = workspace.createTempFile("ecs_task.result", ".json")
