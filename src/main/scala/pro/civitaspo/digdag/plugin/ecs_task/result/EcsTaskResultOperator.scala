@@ -21,6 +21,7 @@ class EcsTaskResultOperator(operatorName: String, context: OperatorContext, syst
       val xfer: TransferManager = TransferManagerBuilder.standard().withS3Client(s3).build()
       val download: Download = xfer.download(s3Uri.getBucket, s3Uri.getKey, new File(f))
       download.waitForCompletion()
+      xfer.shutdownNow(false)
     }
     val content: String = Source.fromFile(f).getLines.mkString
     val data: Config = cf.fromJsonString(content)
