@@ -1,5 +1,6 @@
 #########
-# Just copy from https://raw.githubusercontent.com/treasure-data/digdag/52ff276bcc0aed23bf5a0df6c7a7c7b155c22d53/digdag-standards/src/main/resources/digdag/standards/py/runner.py
+# Copy from https://raw.githubusercontent.com/treasure-data/digdag/52ff276bcc0aed23bf5a0df6c7a7c7b155c22d53/digdag-standards/src/main/resources/digdag/standards/py/runner.py
+# Then, customize a bit about error handling
 #########
 
 import collections
@@ -8,6 +9,7 @@ import inspect
 import json
 import os
 import sys
+import traceback
 
 command = sys.argv[1]
 in_file = sys.argv[2]
@@ -141,6 +143,17 @@ def digdag_inspect_arguments(callable_type, exclude_self, params):
         return args
 
 
+status_params = {}
+def with_error_handler(func, **func_args):
+    try:
+        results = func(**func_args)
+        status_params['exit_code'] = 0
+        return results
+    except Exception as e:
+        status_params['exit_code'] = 1
+        status_params['error_message'] = str(e)
+        status_params['error_stacktrace'] = traceback.format_exc()
+
 callable_type, method_name = digdag_inspect_command(command)
 
 if method_name:
@@ -149,16 +162,19 @@ if method_name:
 
     method = getattr(instance, method_name)
     method_args = digdag_inspect_arguments(method, True, params)
-    result = method(**method_args)
+    # result = method(**method_args)
+    result = with_error_handler(method, **method_args)
 
 else:
     args = digdag_inspect_arguments(callable_type, False, params)
-    result = callable_type(**args)
+    # result = callable_type(**args)
+    result = with_error_handler(callable_type, **args)
 
 out = {
     'subtask_config': digdag_env.subtask_config,
     'export_params': digdag_env.export_params,
     'store_params': digdag_env.store_params,
+    'status_params': status_params,  # only for ecs_task.py
     # 'state_params': digdag_env.state_params,  # only for retrying
 }
 
