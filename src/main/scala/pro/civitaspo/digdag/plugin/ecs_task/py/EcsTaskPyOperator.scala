@@ -4,18 +4,19 @@ import java.nio.file.{Files, Path}
 
 import com.amazonaws.services.s3.AmazonS3URI
 import io.digdag.client.config.Config
-import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
+import io.digdag.spi.{OperatorContext, TemplateEngine}
 import org.apache.commons.io.FileUtils
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
-import pro.civitaspo.digdag.plugin.ecs_task.command.EcsTaskCommandRunner
+import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, EcsTaskCommandRunner}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.language.reflectiveCalls
 
 class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
+      with EcsTaskCommandOperator {
 
   private val runnerPyResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/runner.py"
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/run.sh"
@@ -27,11 +28,10 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid")
   }
   val setupCommands: Seq[String] = params.getListOrEmpty("setup_commands", classOf[String]).asScala
-  val image: String = params.get("image", classOf[String])
 
-  val runner: EcsTaskCommandRunner = EcsTaskCommandRunner(params)
+  override val runner: EcsTaskCommandRunner = EcsTaskCommandRunner(params)
 
-  override def runTask(): TaskResult = {
+  override def uploadScript(): AmazonS3URI = {
     withTempDir(operatorName) { tempDir: Path =>
       createInFile(tempDir)
       createRunnerPyFile(tempDir)
@@ -39,8 +39,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
       createWorkspaceDir(tempDir)
       uploadOnS3(tempDir)
     }
-    val scriptLocation: AmazonS3URI = AmazonS3UriWrapper(s"${workspaceS3UriPrefix.toString}/run.sh")
-    runner.run(image, scriptLocation)
+    AmazonS3UriWrapper(s"${workspaceS3UriPrefix.toString}/run.sh")
   }
 
   protected def createInFile(parent: Path): Unit = {

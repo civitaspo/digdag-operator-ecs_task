@@ -44,8 +44,7 @@ case class EcsTaskCommandRunner(params: Config) {
   val extraHosts: Map[String, String] = params.getMapOrEmpty("extra_hosts", classOf[String], classOf[String]).asScala.toMap
   val healthCheck: Optional[Config] = params.getOptionalNested("health_check")
   val hostname: Optional[String] = params.getOptional("hostname", classOf[String])
-  // NOTE: Set it by run method.
-  // val image: Optional[String] = params.getOptional("image", classOf[String])
+  val image: Optional[String] = params.getOptional("image", classOf[String])
   val interactive: Optional[Boolean] = params.getOptional("interactive", classOf[Boolean])
   val links: Seq[String] = params.getListOrEmpty("links", classOf[String]).asScala
   val linuxParameters: Optional[Config] = params.getOptionalNested("linux_parameters")
@@ -84,7 +83,7 @@ case class EcsTaskCommandRunner(params: Config) {
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
   val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
 
-  def run(image: String, scriptLocation: AmazonS3URI): TaskResult = {
+  def run(scriptLocation: AmazonS3URI): TaskResult = {
     TaskResult.empty(cf)
   }
 
