@@ -27,7 +27,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     if (parent.endsWith("/")) AmazonS3UriWrapper(s"${parent}ecs_task.py.$sessionUuid")
     else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid")
   }
-  val setupCommands: Seq[String] = params.getListOrEmpty("setup_commands", classOf[String]).asScala
+  val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 
   override val runner: EcsTaskCommandRunner = EcsTaskCommandRunner(params)
 
@@ -62,11 +62,11 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     dup.set("ECS_TASK_PY_PREFIX", workspaceS3UriPrefix.getKey)
     dup.set("ECS_TASK_PY_COMMAND", command)
 
-    dup.set("ECS_TASK_PY_SETUP_COMMANDS", "") // set a default value
-    if (setupCommands.nonEmpty) {
-      logger.warn("`setup_commands` option is an experimental, so please be careful in the plugin update.")
-      val cmds: String = setupCommands.map(cmd => s"$cmd 2>> ../stderr.log | tee -a ../stdout.log").mkString("\n")
-      dup.set("ECS_TASK_PY_SETUP_COMMANDS", cmds)
+    dup.set("ECS_TASK_PY_SETUP_COMMAND", "echo 'no setup command'") // set a default value
+    if (pipInstall.nonEmpty) {
+      logger.warn("`pip_install` option is an experimental, so please be careful in the plugin update.")
+      val cmd: String = (Seq("pip", "install") ++ pipInstall).mkString(" ")
+      dup.set("ECS_TASK_PY_SETUP_COMMAND", cmd)
     }
 
     using(classOf[EcsTaskPyOperator].getResourceAsStream(runShResourcePath)) { is =>

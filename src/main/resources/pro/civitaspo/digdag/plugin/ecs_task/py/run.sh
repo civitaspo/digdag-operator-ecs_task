@@ -39,8 +39,10 @@ aws s3 cp s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/ ./ --recursive
 # Move workspace
 cd workspace
 
-# Setup commands
-${ECS_TASK_PY_SETUP_COMMANDS}
+# Run setup command
+${ECS_TASK_PY_SETUP_COMMAND} \
+        2>> ../stderr.log \
+    | tee -a ../stdout.log
 
 # Run
 cat runner.py \
