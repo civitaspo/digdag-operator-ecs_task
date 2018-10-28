@@ -21,13 +21,13 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   private val runnerPyResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/runner.py"
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/run.sh"
 
-  val command: String = params.get("_command", classOf[String])
-  val workspaceS3UriPrefix: AmazonS3URI = {
+  protected val command: String = params.get("_command", classOf[String])
+  protected val workspaceS3UriPrefix: AmazonS3URI = {
     val parent: String = params.get("workspace_s3_uri_prefix", classOf[String])
     if (parent.endsWith("/")) AmazonS3UriWrapper(s"${parent}ecs_task.py.$sessionUuid")
     else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid")
   }
-  val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
+  protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 
   override val runner: EcsTaskCommandRunner = EcsTaskCommandRunner(params)
 
