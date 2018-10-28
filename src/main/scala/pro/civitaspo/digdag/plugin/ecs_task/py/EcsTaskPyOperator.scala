@@ -29,7 +29,16 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   }
   protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 
-  override val runner: EcsTaskCommandRunner = EcsTaskCommandRunner(params)
+  override val runner: EcsTaskCommandRunner =
+    EcsTaskCommandRunner(params = params, environments = additionalEnvironments(), awsConf = aws.conf, logger = logger)
+
+  override def additionalEnvironments(): Map[String, String] = {
+    val vars = context.getPrivilegedVariables
+    val builder = Map.newBuilder[String, String]
+    vars.getKeys.asScala.foreach { k => builder += (k -> vars.get(k))
+    }
+    builder.result()
+  }
 
   override def uploadScript(): AmazonS3URI = {
     withTempDir(operatorName) { tempDir: Path =>
@@ -39,7 +48,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
       createWorkspaceDir(tempDir)
       uploadOnS3(tempDir)
     }
-    AmazonS3UriWrapper(s"${workspaceS3UriPrefix.toString}/run.sh")
+    workspaceS3UriPrefix
   }
 
   protected def createInFile(parent: Path): Unit = {

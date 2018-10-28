@@ -6,10 +6,12 @@ trait EcsTaskCommandOperator {
 
   val runner: EcsTaskCommandRunner
 
+  def additionalEnvironments(): Map[String, String]
+
   def uploadScript(): AmazonS3URI
 
   def runTask(): TaskResult = {
-    runner.run(scriptLocation = uploadScript())
+    runner.run(scriptsLocationPrefix = uploadScript())
   }
 
 }

@@ -4,19 +4,22 @@ import com.google.common.base.Optional
 import io.digdag.client.config.{Config, ConfigFactory}
 import io.digdag.spi.TaskResult
 import io.digdag.util.DurationParam
+import org.slf4j.Logger
+import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
 import scala.collection.JavaConverters._
 
-case class EcsTaskCommandRunner(params: Config) {
+case class EcsTaskCommandRunner(params: Config, environments: Map[String, String], awsConf: AwsConf, logger: Logger) {
 
   val cf: ConfigFactory = params.getFactory
 
   // For ecs_task.register>  operator (TaskDefinition)
   // NOTE: Use only 1 container
   // val containerDefinitions: Seq[ContainerDefinition] = params.getList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
+  val additionalContainerDefinitions: Seq[Config] = params.getListOrEmpty("additional_container_definitions", classOf[Config]).asScala
   val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
   val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
-  val family: String = params.get("family", classOf[String])
+  val family: String = params.get("family", classOf[String], params.get("task_name", classOf[String]).replaceAll("\\+", "_"))
   val memory: Optional[String] = params.getOptional("memory", classOf[String])
   val networkMode: Optional[String] = params.getOptional("network_mode", classOf[String])
   // NOTE: Use `ecs_task.run>`'s one.
@@ -28,7 +31,7 @@ case class EcsTaskCommandRunner(params: Config) {
   // For `ecs_task.register>` operator (ContainerDefinition)
   // NOTE: Set by this plugin
   // val command: Seq[String] = params.getListOrEmpty("command", classOf[String]).asScala
-  // NOTE: Set in `ecs_task.register>` TaskDefinition Context.
+  // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val cpu: Optional[Int] = params.getOptional("cpu", classOf[Int])
   val disableNetworking: Optional[Boolean] = params.getOptional("disable_networking", classOf[Boolean])
   val dnsSearchDomains: Seq[String] = params.getListOrEmpty("dns_search_domains", classOf[String]).asScala
@@ -38,7 +41,7 @@ case class EcsTaskCommandRunner(params: Config) {
   val dockerSecurityOptions: Seq[String] = params.getListOrEmpty("docker_security_options", classOf[String]).asScala
   val entryPoint: Seq[String] = params.getListOrEmpty("entry_point", classOf[String]).asScala
   // NOTE: Add some envs by this plugin
-  val environment: Map[String, String] = params.getMapOrEmpty("environment", classOf[String], classOf[String]).asScala.toMap
+  val configEnvironment: Map[String, String] = params.getMapOrEmpty("environment", classOf[String], classOf[String]).asScala.toMap
   // NOTE: This plugin uses only 1 container so `essential` is always true.
   // val essential: Optional[Boolean] = params.getOptional("essential", classOf[Boolean])
   val extraHosts: Map[String, String] = params.getMapOrEmpty("extra_hosts", classOf[String], classOf[String]).asScala.toMap
@@ -49,9 +52,10 @@ case class EcsTaskCommandRunner(params: Config) {
   val links: Seq[String] = params.getListOrEmpty("links", classOf[String]).asScala
   val linuxParameters: Optional[Config] = params.getOptionalNested("linux_parameters")
   val logConfiguration: Optional[Config] = params.getOptionalNested("log_configuration")
-  // NOTE: Set in `ecs_task.register>` TaskDefinition Context.
+  // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val memory: Optional[Int] = params.getOptional("memory", classOf[Int])
-  val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
+  // NOTE: If you set it by container level, use the `overrides` option.
+  // val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
   val mountPoints: Seq[Config] = params.getListOrEmpty("mount_points", classOf[Config]).asScala
   val name: Optional[String] = params.getOptional("name", classOf[String])
   val portMappings: Seq[Config] = params.getListOrEmpty("port_mappings", classOf[Config]).asScala
@@ -83,8 +87,124 @@ case class EcsTaskCommandRunner(params: Config) {
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
   val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
 
-  def run(scriptLocation: AmazonS3URI): TaskResult = {
-    TaskResult.empty(cf)
+  def run(scriptsLocationPrefix: AmazonS3URI): TaskResult = {
+    val subTasks: Config = cf.create()
+    subTasks.setNested("+register", ecsTaskRegisterSubTask(scriptsLocationPrefix))
+    subTasks.setNested("+run", ecsTaskRunInternalSubTask())
+    subTasks.setNested("+wait", ecsTaskWaitSubTask())
+    subTasks.setNested("+result", ecsTaskResultSubTask(scriptsLocationPrefix))
+
+    val builder = TaskResult.defaultBuilder(cf)
+    builder.subtaskConfig(subTasks)
+    builder.build()
+  }
+
+  protected def ecsTaskRegisterSubTask(scriptsLocationPrefix: AmazonS3URI): Config = {
+    withDefaultSubTask { subTask =>
+      subTask.set("_type", "ecs_task.register")
+      subTask.set("_command", taskDefinitionConfig(scriptsLocationPrefix))
+    }
+  }
+
+  protected def ecsTaskRunInternalSubTask(): Config = {
+    withDefaultSubTask { subTask =>
+      subTask.set("_type", "ecs_task.run_internal")
+      subTask.set("cluster", cluster)
+      subTask.setOptional("count", count)
+      subTask.setOptional("group", group)
+      subTask.setOptional("launch_type", launchType)
+      subTask.setOptional("network_configuration", networkConfiguration)
+      subTask.setOptional("overrides", overrides)
+      subTask.set("placement_constraints", placementConstraints.asJava)
+      subTask.set("placement_strategy", placementStrategy.asJava)
+      subTask.setOptional("platform_version", platformVersion)
+      subTask.setOptional("started_by", startedBy)
+      subTask.set("task_definition", "${last_ecs_task_register.task_definition_arn}")
+    }
+  }
+
+  protected def ecsTaskWaitSubTask(): Config = {
+    withDefaultSubTask { subTask =>
+      subTask.set("_type", "ecs_task.wait")
+      subTask.set("cluster", cluster)
+      subTask.set("tasks", "${last_ecs_task_run.task_arns}")
+      subTask.set("timeout", timeout.toString)
+      subTask.set("ignore_failure", ignoreFailure)
+    }
+  }
+
+  protected def ecsTaskResultSubTask(resultLocationPrefix: AmazonS3URI): Config = {
+    withDefaultSubTask { subTask =>
+      subTask.set("_type", "ecs_task.command_result_internal")
+      subTask.set("_command", resultLocationPrefix.toString)
+    }
+  }
+
+  protected def withDefaultSubTask(f: Config => Config): Config = {
+    val subTask: Config = cf.create()
+
+    subTask.set("auth_method", awsConf.authMethod)
+    subTask.set("profile_name", awsConf.profileName)
+    if (awsConf.profileFile.isPresent) subTask.set("profile_file", awsConf.profileFile.get())
+    subTask.set("use_http_proxy", awsConf.useHttpProxy)
+    if (awsConf.region.isPresent) subTask.set("region", awsConf.region.get())
+    if (awsConf.endpoint.isPresent) subTask.set("endpoint", awsConf.endpoint.get())
+
+    f(subTask)
+    subTask
+  }
+
+  protected def taskDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
+    val c: Config = cf.create()
+
+    c.set("container_definitions", (Seq(containerDefinitionConfig(scriptsLocationPrefix)) ++ additionalContainerDefinitions).asJava)
+    c.setOptional("cpu", cpu)
+    c.setOptional("execution_role_arn", executionRoleArn)
+    c.set("family", family)
+    c.setOptional("memory", memory)
+    c.setOptional("network_mode", networkMode)
+    c.set("requires_compatibilities", requiresCompatibilities.asJava)
+    c.setOptional("task_role_arn", taskRoleArn)
+    c.set("volumes", volumes.asJava)
+
+    c
+  }
+
+  protected def containerDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
+    val c: Config = cf.create()
+
+    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/run.sh - | sh")
+    logger.info(s"Run in the container: ${command.mkString(" ")}")
+    c.set("command", command.asJava)
+    c.setOptional("disable_networking", disableNetworking)
+    c.set("dns_search_domains", dnsSearchDomains.asJava)
+    c.set("dns_servers", dnsServers.asJava)
+    val additionalLabels: Map[String, String] = Map("pro.civitaspo.digdag.plugin.ecs_task.version" -> "0.0.1")
+    c.set("docker_labels", (dockerLabels ++ additionalLabels).asJava)
+    c.set("entry_point", entryPoint.asJava)
+    c.set("environment", (configEnvironment ++ environments).asJava)
+    c.set("essential", true)
+    c.set("extra_hosts", extraHosts.asJava)
+    c.setOptional("health_check", healthCheck)
+    c.setOptional("image", image)
+    c.setOptional("interactive", interactive)
+    c.set("links", links.asJava)
+    c.setOptional("linux_parameters", linuxParameters)
+    c.setOptional("log_configuration", logConfiguration)
+    c.set("mount_points", mountPoints.asJava)
+    c.setOptional("name", name)
+    c.set("port_mappings", portMappings.asJava)
+    c.setOptional("privileged", privileged)
+    c.setOptional("pseudo_terminal", pseudoTerminal)
+    c.setOptional("readonly_root_filesystem", readonlyRootFilesystem)
+    c.setOptional("repository_credentials", repositoryCredentials)
+    c.set("system_controls", systemControls.asJava)
+    c.set("ulimits", ulimits.asJava)
+    c.setOptional("user", user)
+    c.set("volumes_from", volumesFrom.asJava)
+    c.setOptional("working_directory", workingDirectory)
+
+    c
   }
 
 }
