@@ -174,7 +174,7 @@ out = {
     'subtask_config': digdag_env.subtask_config,
     'export_params': digdag_env.export_params,
     'store_params': digdag_env.store_params,
-    'status_params': status_params,  # only for ecs_task.py
+    'status_params': status_params,  # only for ecs_task.command_result_internal
     # 'state_params': digdag_env.state_params,  # only for retrying
 }
 

@@ -6,6 +6,7 @@ import java.util.{Arrays => JArrays, List => JList}
 import io.digdag.client.config.Config
 import io.digdag.spi.{Operator, OperatorContext, OperatorFactory, OperatorProvider, Plugin, TemplateEngine}
 import javax.inject.Inject
+import pro.civitaspo.digdag.plugin.ecs_task.command.EcsTaskCommandResultInternalOperator
 import pro.civitaspo.digdag.plugin.ecs_task.py.EcsTaskPyOperator
 import pro.civitaspo.digdag.plugin.ecs_task.register.EcsTaskRegisterOperator
 import pro.civitaspo.digdag.plugin.ecs_task.result.EcsTaskResultOperator
@@ -22,6 +23,7 @@ object EcsTaskPlugin {
     override def get(): JList[OperatorFactory] = {
       JArrays.asList(
         operatorFactory("ecs_task.py", classOf[EcsTaskPyOperator]),
+        operatorFactory("ecs_task.command_result_internal", classOf[EcsTaskCommandResultInternalOperator]),
         operatorFactory("ecs_task.register", classOf[EcsTaskRegisterOperator]),
         operatorFactory("ecs_task.result", classOf[EcsTaskResultOperator]),
         operatorFactory("ecs_task.run", classOf[EcsTaskRunOperator]),
