@@ -27,29 +27,33 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
       try waiter.wait(req)
       finally waiter.shutdown()
     }
-    if (!ignoreFailure) {
-      val result: DescribeTasksResult = aws.withEcs(_.describeTasks(req))
-      val failures: Seq[Failure] = result.getFailures.asScala
-      if (failures.nonEmpty) {
-        throw new IllegalStateException(s"Some tasks are failed: [${failures.map(_.toString).mkString(", ")}]")
-      }
+    val result: DescribeTasksResult = aws.withEcs(_.describeTasks(req))
+    val failures: Seq[Failure] = result.getFailures.asScala
+    if (failures.nonEmpty) {
+      val failureMessages: String = failures.map(_.toString).mkString(", ")
+      if (!ignoreFailure) throw new IllegalStateException(s"Some tasks are failed: [$failureMessages]")
+      else logger.warn(s"Some tasks are failed but ignore them: $failureMessages")
+    }
 
-      val failedMessages = Seq.newBuilder[String]
-      result.getTasks.asScala.foreach { task =>
-        task.getContainers.asScala.foreach { container =>
-          Option(container.getExitCode) match {
-            case Some(code) =>
-              val msg = s"[${task.getTaskArn}] ${container.getName} has stopped with exit_code=$code"
-              logger.info(msg)
-              if (!code.equals(0)) failedMessages += msg
-            case None =>
-              val msg = s"[${task.getTaskArn}] ${container.getName} has stopped without exit_code: reason=${container.getReason}"
-              logger.info(msg)
-              failedMessages += msg
-          }
+    val failedMessages = Seq.newBuilder[String]
+    result.getTasks.asScala.foreach { task =>
+      task.getContainers.asScala.foreach { container =>
+        Option(container.getExitCode) match {
+          case Some(code) =>
+            val msg = s"[${task.getTaskArn}] ${container.getName} has stopped with exit_code=$code"
+            logger.info(msg)
+            if (!code.equals(0)) failedMessages += msg
+          case None =>
+            val msg = s"[${task.getTaskArn}] ${container.getName} has stopped without exit_code: reason=${container.getReason}"
+            logger.info(msg)
+            failedMessages += msg
         }
       }
-      if (failedMessages.result().nonEmpty) throw new IllegalStateException(s"Failure messages: ${failedMessages.result().mkString(",")}")
+    }
+    if (failedMessages.result().nonEmpty) {
+      val message: String = failedMessages.result().mkString(", ")
+      if (!ignoreFailure) throw new IllegalStateException(s"Failure messages: $message")
+      else logger.warn(s"Some tasks are failed but ignore them: $message")
     }
 
     TaskResult.empty(cf)

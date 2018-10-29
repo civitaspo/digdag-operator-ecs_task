@@ -85,7 +85,6 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
 
   // For ecs_task.wait operator
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
-  val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
 
   def run(scriptsLocationPrefix: AmazonS3URI): TaskResult = {
     val subTasks: Config = cf.create()
@@ -129,7 +128,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
       subTask.set("cluster", cluster)
       subTask.set("tasks", "${last_ecs_task_run.task_arns}")
       subTask.set("timeout", timeout.toString)
-      subTask.set("ignore_failure", ignoreFailure)
+      subTask.set("ignore_failure", true)
     }
   }
 
