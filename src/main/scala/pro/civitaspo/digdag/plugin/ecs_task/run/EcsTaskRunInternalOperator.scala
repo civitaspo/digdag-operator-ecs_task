@@ -5,9 +5,7 @@ import com.amazonaws.services.ecs.model.{
   KeyValuePair,
   NetworkConfiguration,
   PlacementConstraint,
-  PlacementConstraintType,
   PlacementStrategy,
-  PlacementStrategyType,
   RunTaskRequest,
   RunTaskResult,
   TaskOverride
@@ -128,7 +126,7 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
     if (c.isEmpty) return Optional.absent()
 
     val expression: Optional[String] = c.getOptional("expression", classOf[String])
-    val `type`: Optional[PlacementConstraintType] = c.getOptional("type", classOf[PlacementConstraintType])
+    val `type`: Optional[String] = c.getOptional("type", classOf[String])
 
     val pc: PlacementConstraint = new PlacementConstraint()
     if (expression.isPresent) pc.setExpression(expression.get)
@@ -141,7 +139,7 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
     if (c.isEmpty) return Optional.absent()
 
     val field: Optional[String] = c.getOptional("field", classOf[String])
-    val `type`: Optional[PlacementStrategyType] = c.getOptional("type", classOf[PlacementStrategyType])
+    val `type`: Optional[String] = c.getOptional("type", classOf[String])
 
     val ps: PlacementStrategy = new PlacementStrategy()
     if (field.isPresent) ps.setField(field.get)
