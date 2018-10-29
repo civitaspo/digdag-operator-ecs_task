@@ -2,7 +2,7 @@ package pro.civitaspo.digdag.plugin.ecs_task.result
 import java.io.File
 
 import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.transfer.{Download, TransferManager, TransferManagerBuilder}
+import com.amazonaws.services.s3.transfer.Download
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
@@ -17,11 +17,9 @@ class EcsTaskResultOperator(operatorName: String, context: OperatorContext, syst
 
   override def runTask(): TaskResult = {
     val f: String = workspace.createTempFile("ecs_task.result", ".json")
-    aws.withS3 { s3 =>
-      val xfer: TransferManager = TransferManagerBuilder.standard().withS3Client(s3).build()
+    aws.withTransferManager { xfer =>
       val download: Download = xfer.download(s3Uri.getBucket, s3Uri.getKey, new File(f))
       download.waitForCompletion()
-      xfer.shutdownNow(false)
     }
     val content: String = Source.fromFile(f).getLines.mkString
     val data: Config = cf.fromJsonString(content)
