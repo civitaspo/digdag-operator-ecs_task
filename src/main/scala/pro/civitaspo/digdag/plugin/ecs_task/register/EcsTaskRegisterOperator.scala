@@ -77,8 +77,8 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val dockerLabels: Map[String, String] = c.getMapOrEmpty("docker_labels", classOf[String], classOf[String]).asScala.toMap
     val dockerSecurityOptions: Seq[String] = c.getListOrEmpty("docker_security_options", classOf[String]).asScala
     val entryPoint: Seq[String] = c.getListOrEmpty("entry_point", classOf[String]).asScala
-    val environment: Seq[KeyValuePair] = c
-      .getMapOrEmpty("environment", classOf[String], classOf[String])
+    val environments: Seq[KeyValuePair] = c
+      .getMapOrEmpty("environments", classOf[String], classOf[String])
       .asScala
       .map { case (k: String, v: String) => new KeyValuePair().withName(k).withValue(v) }
       .toSeq // TODO: doc
@@ -119,7 +119,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (dockerLabels.nonEmpty) cd.setDockerLabels(dockerLabels.asJava)
     if (dockerSecurityOptions.nonEmpty) cd.setDockerSecurityOptions(dockerSecurityOptions.asJava)
     if (entryPoint.nonEmpty) cd.setEntryPoint(entryPoint.asJava)
-    if (environment.nonEmpty) cd.setEnvironment(environment.asJava) // TODO: merge params?
+    if (environments.nonEmpty) cd.setEnvironment(environments.asJava) // TODO: merge params?
     if (essential.isPresent) cd.setEssential(essential.get)
     if (extraHosts.nonEmpty) cd.setExtraHosts(extraHosts.asJava)
     if (healthCheck.isPresent) cd.setHealthCheck(healthCheck.get)
