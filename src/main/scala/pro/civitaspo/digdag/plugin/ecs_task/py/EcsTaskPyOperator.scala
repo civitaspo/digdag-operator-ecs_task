@@ -16,7 +16,7 @@ import scala.language.reflectiveCalls
 
 class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
-      with EcsTaskCommandOperator {
+    with EcsTaskCommandOperator {
 
   private val runnerPyResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/runner.py"
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/run.sh"
@@ -35,7 +35,8 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   override def additionalEnvironments(): Map[String, String] = {
     val vars = context.getPrivilegedVariables
     val builder = Map.newBuilder[String, String]
-    vars.getKeys.asScala.foreach { k => builder += (k -> vars.get(k))
+    vars.getKeys.asScala.foreach { k =>
+      builder += (k -> vars.get(k))
     }
     builder.result()
   }
@@ -111,7 +112,8 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
 
   protected def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-    using(workspace.newBufferedWriter(file.toString, UTF_8)) { writer => writer.write(content)
+    using(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+      writer.write(content)
     }
   }
 
