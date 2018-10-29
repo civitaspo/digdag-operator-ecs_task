@@ -10,9 +10,7 @@ import com.amazonaws.services.ecs.model.{
   KeyValuePair,
   LinuxParameters,
   LogConfiguration,
-  LogDriver,
   MountPoint,
-  NetworkMode,
   PortMapping,
   RegisterTaskDefinitionRequest,
   RegisterTaskDefinitionResult,
@@ -20,9 +18,7 @@ import com.amazonaws.services.ecs.model.{
   SystemControl,
   TaskDefinitionPlacementConstraint,
   Tmpfs,
-  TransportProtocol,
   Ulimit,
-  UlimitName,
   Volume,
   VolumeFrom
 }
@@ -48,7 +44,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
     val family: String = c.get("family", classOf[String])
     val memory: Optional[String] = c.getOptional("memory", classOf[String])
-    val networkMode: Optional[NetworkMode] = c.getOptional("network_mode", classOf[NetworkMode])
+    val networkMode: Optional[String] = c.getOptional("network_mode", classOf[String])
 
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.getListOrEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
@@ -235,7 +231,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureLogConfiguration(c: Config): Optional[LogConfiguration] = {
     if (c.isEmpty) return Optional.absent()
 
-    val logDriver: LogDriver = c.get("log_driver", classOf[LogDriver]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
+    val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
     val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
 
     val lc: LogConfiguration = new LogConfiguration()
@@ -265,7 +261,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
 
     val containerPort: Optional[Int] = c.getOptional("container_port", classOf[Int])
     val hostPort: Optional[Int] = c.getOptional("host_port", classOf[Int])
-    val protocol: Optional[TransportProtocol] = c.getOptional("protocol", classOf[TransportProtocol])
+    val protocol: Optional[String] = c.getOptional("protocol", classOf[String])
 
     val pm: PortMapping = new PortMapping()
     if (containerPort.isPresent) pm.setContainerPort(containerPort.get)
@@ -303,7 +299,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (c.isEmpty) return Optional.absent()
 
     val hardLimit: Int = c.get("hard_limit", classOf[Int])
-    val name: UlimitName = c.get("name", classOf[UlimitName])
+    val name: String = c.get("name", classOf[String])
     val softLimit: Int = c.get("soft_limit", classOf[Int])
 
     val u: Ulimit = new Ulimit()
