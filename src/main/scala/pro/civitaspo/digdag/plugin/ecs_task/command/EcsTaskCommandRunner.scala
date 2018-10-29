@@ -41,7 +41,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   val dockerSecurityOptions: Seq[String] = params.getListOrEmpty("docker_security_options", classOf[String]).asScala
   val entryPoint: Seq[String] = params.getListOrEmpty("entry_point", classOf[String]).asScala
   // NOTE: Add some envs by this plugin
-  val configEnvironment: Map[String, String] = params.getMapOrEmpty("environment", classOf[String], classOf[String]).asScala.toMap
+  val configEnvironment: Map[String, String] = params.getMapOrEmpty("environments", classOf[String], classOf[String]).asScala.toMap
   // NOTE: This plugin uses only 1 container so `essential` is always true.
   // val essential: Optional[Boolean] = params.getOptional("essential", classOf[Boolean])
   val extraHosts: Map[String, String] = params.getMapOrEmpty("extra_hosts", classOf[String], classOf[String]).asScala.toMap
