@@ -3,7 +3,7 @@
 
 * [Breaking Change] Do not use enum parameter directory because the enums require upper camel case ( `ecs_task.{py,register,run}>` operator)
 * [Enhancement] Rename the configuration key: `additional_containers` to `sidecars` ( `ecs_task.py>` operator)
-* [Enhancement] Rename the configuration key: `environment` to `environments` ( `ecs_task.py>` operator)
+* [Enhancement] Rename the configuration key: `environment` to `environments` ( `ecs_task.{py,run}>` operator)
 * [Enhancement] Rename the output key: `last_ecs_task_py` to `last_ecs_task_command` ( `ecs_task.py>` operator)
 * [Fix] Fix example indents
 
