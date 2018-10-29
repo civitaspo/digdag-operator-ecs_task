@@ -36,7 +36,7 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
       .storeParams(
         out
           .getNestedOrGetEmpty("store_params")
-          .setNested("last_ecs_task_py", statusParams)
+          .setNested("last_ecs_task_command", statusParams)
       )
       .build()
   }
