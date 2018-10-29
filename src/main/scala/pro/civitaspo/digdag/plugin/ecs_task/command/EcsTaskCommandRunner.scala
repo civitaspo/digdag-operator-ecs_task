@@ -16,7 +16,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   // For ecs_task.register>  operator (TaskDefinition)
   // NOTE: Use only 1 container
   // val containerDefinitions: Seq[ContainerDefinition] = params.getList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
-  val additionalContainerDefinitions: Seq[Config] = params.getListOrEmpty("additional_container_definitions", classOf[Config]).asScala
+  val additionalContainers: Seq[Config] = params.getListOrEmpty("additional_containers", classOf[Config]).asScala
   val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
   val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
   val family: String = params.get("family", classOf[String], params.get("task_name", classOf[String]).replaceAll("\\+", "_"))
@@ -157,7 +157,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   protected def taskDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
     val c: Config = cf.create()
 
-    c.set("container_definitions", (Seq(containerDefinitionConfig(scriptsLocationPrefix)) ++ additionalContainerDefinitions).asJava)
+    c.set("container_definitions", (Seq(containerDefinitionConfig(scriptsLocationPrefix)) ++ additionalContainers).asJava)
     c.setOptional("cpu", cpu)
     c.setOptional("execution_role_arn", executionRoleArn)
     c.set("family", family)
