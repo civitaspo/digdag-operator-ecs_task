@@ -102,8 +102,8 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
 
     val command: Seq[String] = c.getListOrEmpty("command", classOf[String]).asScala
     val cpu: Optional[Int] = c.getOptional("cpu", classOf[Int])
-    val environment: Seq[KeyValuePair] = c
-      .getMapOrEmpty("environment", classOf[String], classOf[String])
+    val environments: Seq[KeyValuePair] = c
+      .getMapOrEmpty("environments", classOf[String], classOf[String])
       .asScala
       .map { case (k: String, v: String) => new KeyValuePair().withName(k).withValue(v) }
       .toSeq // TODO: doc
@@ -114,7 +114,7 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
     val co: ContainerOverride = new ContainerOverride()
     if (command.nonEmpty) co.setCommand(command.asJava)
     if (cpu.isPresent) co.setCpu(cpu.get)
-    if (environment.nonEmpty) co.setEnvironment(environment.asJava)
+    if (environments.nonEmpty) co.setEnvironment(environments.asJava)
     if (memory.isPresent) co.setMemory(memory.get)
     if (memoryReservation.isPresent) co.setMemoryReservation(memoryReservation.get)
     if (name.isPresent) co.setName(name.get)
