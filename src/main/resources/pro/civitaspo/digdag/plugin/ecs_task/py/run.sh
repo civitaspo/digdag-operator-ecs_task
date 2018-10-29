@@ -45,7 +45,7 @@ ${ECS_TASK_PY_SETUP_COMMAND} \
     | tee -a ../stdout.log
 
 # Run
-cat runner.py \
+cat ../runner.py \
     | python - "${ECS_TASK_PY_COMMAND}" \
         ../in.json \
         ../out.json \
@@ -59,6 +59,6 @@ cd ..
 cat stderr.log 1>&2
 
 # Upload results
-aws s3 ./out.json s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/
-aws s3 ./stdout.log s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/
-aws s3 ./stderr.log s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/
+aws s3 cp ./out.json s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/
+aws s3 cp ./stdout.log s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/
+aws s3 cp ./stderr.log s3://${ECS_TASK_PY_BUCKET}/${ECS_TASK_PY_PREFIX}/

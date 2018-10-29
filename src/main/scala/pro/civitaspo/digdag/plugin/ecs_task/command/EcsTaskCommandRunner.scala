@@ -57,7 +57,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   // NOTE: If you set it by container level, use the `overrides` option.
   // val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
   val mountPoints: Seq[Config] = params.getListOrEmpty("mount_points", classOf[Config]).asScala
-  val name: Optional[String] = params.getOptional("name", classOf[String])
+  val containerName: String = params.get("container_name", classOf[String], family)
   val portMappings: Seq[Config] = params.getListOrEmpty("port_mappings", classOf[Config]).asScala
   val privileged: Optional[Boolean] = params.getOptional("privileged", classOf[Boolean])
   val pseudoTerminal: Optional[Boolean] = params.getOptional("pseudo_terminal", classOf[Boolean])
@@ -173,7 +173,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   protected def containerDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
     val c: Config = cf.create()
 
-    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/run.sh - | sh")
+    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/run.sh ./ && sh run.sh")
     logger.info(s"Run in the container: ${command.mkString(" ")}")
     c.set("command", command.asJava)
     c.setOptional("disable_networking", disableNetworking)
@@ -192,7 +192,7 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
     c.setOptional("linux_parameters", linuxParameters)
     c.setOptional("log_configuration", logConfiguration)
     c.set("mount_points", mountPoints.asJava)
-    c.setOptional("name", name)
+    c.set("name", containerName)
     c.set("port_mappings", portMappings.asJava)
     c.setOptional("privileged", privileged)
     c.setOptional("pseudo_terminal", pseudoTerminal)

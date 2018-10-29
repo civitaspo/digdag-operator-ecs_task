@@ -52,7 +52,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   }
 
   protected def createInFile(parent: Path): Unit = {
-    val inContent: String = templateEngine.template(params.toString, params)
+    val inContent: String = templateEngine.template(cf.create.set("params", params).toString, params)
     val inFile: Path = Files.createFile(parent.resolve("in.json"))
     writeFile(file = inFile, content = inContent)
   }
@@ -73,7 +73,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
 
     dup.set("ECS_TASK_PY_SETUP_COMMAND", "echo 'no setup command'") // set a default value
     if (pipInstall.nonEmpty) {
-      logger.warn("`pip_install` option is an experimental, so please be careful in the plugin update.")
+      logger.warn("`pip_install` option is experimental, so please be careful in the plugin update.")
       val cmd: String = (Seq("pip", "install") ++ pipInstall).mkString(" ")
       dup.set("ECS_TASK_PY_SETUP_COMMAND", cmd)
     }

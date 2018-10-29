@@ -75,7 +75,7 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
       val download: Download = xfer.download(uri.getBucket, uri.getKey, new File(f))
       download.waitForCompletion()
     }
-    Source.fromFile(f).getLines.mkString
+    Source.fromFile(f).getLines.mkString("\n")
   }
 
 }
