@@ -69,13 +69,6 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
   }
 
   protected def loadS3ObjectContent(uri: AmazonS3URI): String = {
-    val f: String = workspace.createTempFile("ecs_task.command_result_internal", ".txt")
-    logger.info(s"Download: $uri -> $f")
-    aws.withTransferManager { xfer =>
-      val download: Download = xfer.download(uri.getBucket, uri.getKey, new File(f))
-      download.waitForCompletion()
-    }
-    Source.fromFile(f).getLines.mkString("\n")
+    aws.withS3(_.getObjectAsString(uri.getBucket, uri.getKey))
   }
-
 }
