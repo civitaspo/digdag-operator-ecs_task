@@ -1,14 +1,10 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
-import java.io.File
-
 import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.transfer.Download
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 
-import scala.io.Source
 import scala.util.{Failure, Try}
 
 class EcsTaskCommandResultInternalOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
@@ -36,7 +32,7 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
       .storeParams(
         out
           .getNestedOrGetEmpty("store_params")
-          .setNested("last_ecs_task_py", statusParams)
+          .setNested("last_ecs_task_command", statusParams)
       )
       .build()
   }
@@ -69,13 +65,7 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
   }
 
   protected def loadS3ObjectContent(uri: AmazonS3URI): String = {
-    val f: String = workspace.createTempFile("ecs_task.command_result_internal", ".txt")
-    logger.info(s"Download: $uri -> $f")
-    aws.withTransferManager { xfer =>
-      val download: Download = xfer.download(uri.getBucket, uri.getKey, new File(f))
-      download.waitForCompletion()
-    }
-    Source.fromFile(f).getLines.mkString("\n")
+    logger.info(s"Load content from: $uri")
+    aws.withS3(_.getObjectAsString(uri.getBucket, uri.getKey))
   }
-
 }

@@ -10,9 +10,7 @@ import com.amazonaws.services.ecs.model.{
   KeyValuePair,
   LinuxParameters,
   LogConfiguration,
-  LogDriver,
   MountPoint,
-  NetworkMode,
   PortMapping,
   RegisterTaskDefinitionRequest,
   RegisterTaskDefinitionResult,
@@ -20,9 +18,7 @@ import com.amazonaws.services.ecs.model.{
   SystemControl,
   TaskDefinitionPlacementConstraint,
   Tmpfs,
-  TransportProtocol,
   Ulimit,
-  UlimitName,
   Volume,
   VolumeFrom
 }
@@ -43,18 +39,18 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val req: RegisterTaskDefinitionRequest = new RegisterTaskDefinitionRequest()
 
     val containerDefinitions: Seq[ContainerDefinition] =
-      c.getList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
+      c.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
     val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
     val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
     val family: String = c.get("family", classOf[String])
     val memory: Optional[String] = c.getOptional("memory", classOf[String])
-    val networkMode: Optional[NetworkMode] = c.getOptional("network_mode", classOf[NetworkMode])
+    val networkMode: Optional[String] = c.getOptional("network_mode", classOf[String])
 
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
-      c.getListOrEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
-    val requiresCompatibilities: Seq[String] = c.getListOrEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
+      c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
+    val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
     val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
-    val volumes: Seq[Volume] = c.getListOrEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
+    val volumes: Seq[Volume] = c.parseListOrGetEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
 
     req.setContainerDefinitions(containerDefinitions.asJava)
     if (cpu.isPresent) req.setCpu(cpu.get)
@@ -73,16 +69,16 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureContainerDefinition(c: Config): Optional[ContainerDefinition] = {
     if (c.isEmpty) return Optional.absent()
 
-    val command: Seq[String] = c.getListOrEmpty("command", classOf[String]).asScala
+    val command: Seq[String] = c.parseListOrGetEmpty("command", classOf[String]).asScala
     val cpu: Optional[Int] = c.getOptional("cpu", classOf[Int])
     val disableNetworking: Optional[Boolean] = c.getOptional("disable_networking", classOf[Boolean])
-    val dnsSearchDomains: Seq[String] = c.getListOrEmpty("dns_search_domains", classOf[String]).asScala
-    val dnsServers: Seq[String] = c.getListOrEmpty("dns_servers", classOf[String]).asScala
+    val dnsSearchDomains: Seq[String] = c.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala
+    val dnsServers: Seq[String] = c.parseListOrGetEmpty("dns_servers", classOf[String]).asScala
     val dockerLabels: Map[String, String] = c.getMapOrEmpty("docker_labels", classOf[String], classOf[String]).asScala.toMap
-    val dockerSecurityOptions: Seq[String] = c.getListOrEmpty("docker_security_options", classOf[String]).asScala
-    val entryPoint: Seq[String] = c.getListOrEmpty("entry_point", classOf[String]).asScala
-    val environment: Seq[KeyValuePair] = c
-      .getMapOrEmpty("environment", classOf[String], classOf[String])
+    val dockerSecurityOptions: Seq[String] = c.parseListOrGetEmpty("docker_security_options", classOf[String]).asScala
+    val entryPoint: Seq[String] = c.parseListOrGetEmpty("entry_point", classOf[String]).asScala
+    val environments: Seq[KeyValuePair] = c
+      .getMapOrEmpty("environments", classOf[String], classOf[String])
       .asScala
       .map { case (k: String, v: String) => new KeyValuePair().withName(k).withValue(v) }
       .toSeq // TODO: doc
@@ -92,26 +88,26 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
       .asScala
       .map { case (host: String, ip: String) => new HostEntry().withHostname(host).withIpAddress(ip) }
       .toSeq // TODO: doc
-    val healthCheck: Optional[HealthCheck] = configureHealthCheck(c.getNestedOrGetEmpty("health_check"))
+    val healthCheck: Optional[HealthCheck] = configureHealthCheck(c.parseNestedOrGetEmpty("health_check"))
     val hostname: Optional[String] = c.getOptional("hostname", classOf[String])
     val image: Optional[String] = c.getOptional("image", classOf[String])
     val interactive: Optional[Boolean] = c.getOptional("interactive", classOf[Boolean])
-    val links: Seq[String] = c.getListOrEmpty("links", classOf[String]).asScala
-    val linuxParameters: Optional[LinuxParameters] = configureLinuxParameters(c.getNestedOrGetEmpty("linux_parameters"))
-    val logConfiguration: Optional[LogConfiguration] = configureLogConfiguration(c.getNestedOrGetEmpty("log_configuration"))
+    val links: Seq[String] = c.parseListOrGetEmpty("links", classOf[String]).asScala
+    val linuxParameters: Optional[LinuxParameters] = configureLinuxParameters(c.parseNestedOrGetEmpty("linux_parameters"))
+    val logConfiguration: Optional[LogConfiguration] = configureLogConfiguration(c.parseNestedOrGetEmpty("log_configuration"))
     val memory: Optional[Int] = c.getOptional("memory", classOf[Int])
     val memoryReservation: Optional[Int] = c.getOptional("memory_reservation", classOf[Int])
-    val mountPoints: Seq[MountPoint] = c.getListOrEmpty("mount_points", classOf[Config]).asScala.map(configureMountPoint).map(_.get)
+    val mountPoints: Seq[MountPoint] = c.parseListOrGetEmpty("mount_points", classOf[Config]).asScala.map(configureMountPoint).map(_.get)
     val name: Optional[String] = c.getOptional("name", classOf[String])
-    val portMappings: Seq[PortMapping] = c.getListOrEmpty("port_mappings", classOf[Config]).asScala.map(configurePortMapping).map(_.get)
+    val portMappings: Seq[PortMapping] = c.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala.map(configurePortMapping).map(_.get)
     val privileged: Optional[Boolean] = c.getOptional("privileged", classOf[Boolean])
     val pseudoTerminal: Optional[Boolean] = c.getOptional("pseudo_terminal", classOf[Boolean])
     val readonlyRootFilesystem: Optional[Boolean] = c.getOptional("readonly_root_filesystem", classOf[Boolean])
-    val repositoryCredentials: Optional[RepositoryCredentials] = configureRepositoryCredentials(c.getNestedOrGetEmpty("repository_credentials"))
-    val systemControls: Seq[SystemControl] = c.getListOrEmpty("system_controls", classOf[Config]).asScala.map(configureSystemControl).map(_.get)
-    val ulimits: Seq[Ulimit] = c.getListOrEmpty("ulimits", classOf[Config]).asScala.map(configureUlimit).map(_.get)
+    val repositoryCredentials: Optional[RepositoryCredentials] = configureRepositoryCredentials(c.parseNestedOrGetEmpty("repository_credentials"))
+    val systemControls: Seq[SystemControl] = c.parseListOrGetEmpty("system_controls", classOf[Config]).asScala.map(configureSystemControl).map(_.get)
+    val ulimits: Seq[Ulimit] = c.parseListOrGetEmpty("ulimits", classOf[Config]).asScala.map(configureUlimit).map(_.get)
     val user: Optional[String] = c.getOptional("user", classOf[String])
-    val volumesFrom: Seq[VolumeFrom] = c.getListOrEmpty("volumes_from", classOf[Config]).asScala.map(configureVolumeFrom).map(_.get)
+    val volumesFrom: Seq[VolumeFrom] = c.parseListOrGetEmpty("volumes_from", classOf[Config]).asScala.map(configureVolumeFrom).map(_.get)
     val workingDirectory: Optional[String] = c.getOptional("working_directory", classOf[String])
 
     val cd: ContainerDefinition = new ContainerDefinition()
@@ -123,7 +119,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (dockerLabels.nonEmpty) cd.setDockerLabels(dockerLabels.asJava)
     if (dockerSecurityOptions.nonEmpty) cd.setDockerSecurityOptions(dockerSecurityOptions.asJava)
     if (entryPoint.nonEmpty) cd.setEntryPoint(entryPoint.asJava)
-    if (environment.nonEmpty) cd.setEnvironment(environment.asJava) // TODO: merge params?
+    if (environments.nonEmpty) cd.setEnvironment(environments.asJava) // TODO: merge params?
     if (essential.isPresent) cd.setEssential(essential.get)
     if (extraHosts.nonEmpty) cd.setExtraHosts(extraHosts.asJava)
     if (healthCheck.isPresent) cd.setHealthCheck(healthCheck.get)
@@ -154,7 +150,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureHealthCheck(c: Config): Optional[HealthCheck] = {
     if (c.isEmpty) return Optional.absent()
 
-    val command: Seq[String] = params.getList("command", classOf[String]).asScala
+    val command: Seq[String] = params.parseList("command", classOf[String]).asScala
     val interval: Optional[Int] = params.getOptional("interval", classOf[Int])
     val retries: Optional[Int] = params.getOptional("retries", classOf[Int])
     val startPeriod: Optional[Int] = params.getOptional("start_period", classOf[Int])
@@ -173,11 +169,11 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureLinuxParameters(c: Config): Optional[LinuxParameters] = {
     if (c.isEmpty) return Optional.absent()
 
-    val capabilities: Optional[KernelCapabilities] = configureKernelCapabilities(c.getNestedOrGetEmpty("capabilities"))
-    val devices: Seq[Device] = c.getListOrEmpty("devices", classOf[Config]).asScala.map(configureDevice).map(_.get)
+    val capabilities: Optional[KernelCapabilities] = configureKernelCapabilities(c.parseNestedOrGetEmpty("capabilities"))
+    val devices: Seq[Device] = c.parseListOrGetEmpty("devices", classOf[Config]).asScala.map(configureDevice).map(_.get)
     val initProcessEnabled: Optional[Boolean] = c.getOptional("init_process_enabled", classOf[Boolean])
     val sharedMemorySize: Optional[Int] = c.getOptional("shared_memory_size", classOf[Int])
-    val tmpfs: Seq[Tmpfs] = c.getListOrEmpty("tmpfs", classOf[Config]).asScala.map(configureTmpfs).map(_.get)
+    val tmpfs: Seq[Tmpfs] = c.parseListOrGetEmpty("tmpfs", classOf[Config]).asScala.map(configureTmpfs).map(_.get)
 
     val lp: LinuxParameters = new LinuxParameters()
     if (capabilities.isPresent) lp.setCapabilities(capabilities.get)
@@ -192,8 +188,8 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureKernelCapabilities(c: Config): Optional[KernelCapabilities] = {
     if (c.isEmpty) return Optional.absent()
 
-    val add: Seq[String] = c.getListOrEmpty("add", classOf[String]).asScala
-    val drop: Seq[String] = c.getListOrEmpty("drop", classOf[String]).asScala
+    val add: Seq[String] = c.parseListOrGetEmpty("add", classOf[String]).asScala
+    val drop: Seq[String] = c.parseListOrGetEmpty("drop", classOf[String]).asScala
 
     val kc: KernelCapabilities = new KernelCapabilities()
     if (add.nonEmpty) kc.setAdd(add.asJava)
@@ -207,7 +203,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
 
     val containerPath: Optional[String] = c.getOptional("container_path", classOf[String])
     val hostPath: String = c.get("host_path", classOf[String])
-    val permissions: Seq[String] = c.getListOrEmpty("permissions", classOf[String]).asScala
+    val permissions: Seq[String] = c.parseListOrGetEmpty("permissions", classOf[String]).asScala
 
     val d: Device = new Device()
     if (containerPath.isPresent) d.setContainerPath(containerPath.get)
@@ -221,7 +217,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (c.isEmpty) return Optional.absent()
 
     val containerPath: String = c.get("container_path", classOf[String])
-    val mountOptions: Seq[String] = c.getListOrEmpty("mount_options", classOf[String]).asScala
+    val mountOptions: Seq[String] = c.parseListOrGetEmpty("mount_options", classOf[String]).asScala
     val size: Int = c.get("size", classOf[Int])
 
     val tmpfs: Tmpfs = new Tmpfs()
@@ -235,7 +231,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureLogConfiguration(c: Config): Optional[LogConfiguration] = {
     if (c.isEmpty) return Optional.absent()
 
-    val logDriver: LogDriver = c.get("log_driver", classOf[LogDriver]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
+    val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
     val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
 
     val lc: LogConfiguration = new LogConfiguration()
@@ -265,7 +261,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
 
     val containerPort: Optional[Int] = c.getOptional("container_port", classOf[Int])
     val hostPort: Optional[Int] = c.getOptional("host_port", classOf[Int])
-    val protocol: Optional[TransportProtocol] = c.getOptional("protocol", classOf[TransportProtocol])
+    val protocol: Optional[String] = c.getOptional("protocol", classOf[String])
 
     val pm: PortMapping = new PortMapping()
     if (containerPort.isPresent) pm.setContainerPort(containerPort.get)
@@ -303,7 +299,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (c.isEmpty) return Optional.absent()
 
     val hardLimit: Int = c.get("hard_limit", classOf[Int])
-    val name: UlimitName = c.get("name", classOf[UlimitName])
+    val name: String = c.get("name", classOf[String])
     val softLimit: Int = c.get("soft_limit", classOf[Int])
 
     val u: Ulimit = new Ulimit()
@@ -344,9 +340,9 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (c.isEmpty) return Optional.absent()
 
     val dockerVolumeConfiguration: Optional[DockerVolumeConfiguration] = configureDockerVolumeConfiguration(
-      c.getNestedOrGetEmpty("docker_volume_configuration")
+      c.parseNestedOrGetEmpty("docker_volume_configuration")
     )
-    val host: Optional[HostVolumeProperties] = configureHostVolumeProperties(c.getNestedOrGetEmpty("host"))
+    val host: Optional[HostVolumeProperties] = configureHostVolumeProperties(c.parseNestedOrGetEmpty("host"))
     val name: Optional[String] = c.getOptional("name", classOf[String])
 
     val v: Volume = new Volume()

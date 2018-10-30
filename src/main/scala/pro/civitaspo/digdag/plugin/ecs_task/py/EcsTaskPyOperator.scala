@@ -13,6 +13,8 @@ import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, Ecs
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.language.reflectiveCalls
+import scala.util.Random
+import scala.util.hashing.MurmurHash3
 
 class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
@@ -24,8 +26,9 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   protected val command: String = params.get("_command", classOf[String])
   protected val workspaceS3UriPrefix: AmazonS3URI = {
     val parent: String = params.get("workspace_s3_uri_prefix", classOf[String])
-    if (parent.endsWith("/")) AmazonS3UriWrapper(s"${parent}ecs_task.py.$sessionUuid")
-    else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid")
+    val random: String = Random.alphanumeric.take(10).mkString
+    if (parent.endsWith("/")) AmazonS3UriWrapper(s"${parent}ecs_task.py.$sessionUuid.$random")
+    else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid.$random")
   }
   protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 

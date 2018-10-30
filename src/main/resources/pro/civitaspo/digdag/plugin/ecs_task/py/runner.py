@@ -153,7 +153,7 @@ def with_error_handler(func, **func_args):
         status_params['exit_code'] = 1
         status_params['error_message'] = str(e)
         status_params['error_stacktrace'] = traceback.format_exc()
-        print('message: {}, stacktrace: {}', str(e), traceback.format_exc())
+        print('message: {}, stacktrace: {}'.format(str(e), traceback.format_exc()))
 
 callable_type, method_name = digdag_inspect_command(command)
 

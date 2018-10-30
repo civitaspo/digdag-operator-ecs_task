@@ -1,32 +1,3 @@
-#!/bin/sh
-
-## s3 path structure
-# .
-# ├── workspace
-# │   ├── hoge.dig
-# │   └── py
-# │        └── hoge.py
-# ├── in_file.json
-# ├── out_file.json
-# ├── run.sh
-# ├── runner.py
-# ├── stdout.log
-# └── stderr.log
-
-## local path structure
-# .
-# ├── run.sh
-# └── digdag-operator-ecs_task
-#      ├── workspace
-#      │   ├── hoge.dig
-#      │   └── py
-#      │        └── hoge.py
-#      ├── in.json
-#      ├── out.json
-#      ├── runner.py
-#      ├── stdout.log
-#      └── stderr.log
-
 set -ex
 set -o pipefail
 
