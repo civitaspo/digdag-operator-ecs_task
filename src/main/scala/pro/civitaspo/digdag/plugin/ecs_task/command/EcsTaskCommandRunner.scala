@@ -19,7 +19,11 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   val sidecars: Seq[Config] = params.getListOrEmpty("sidecars", classOf[Config]).asScala
   val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
   val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
-  val family: String = params.get("family", classOf[String], params.get("task_name", classOf[String]).replaceAll("\\+", "_"))
+  val family: String = params.get("family", classOf[String], params.get("task_name", classOf[String])
+    .replaceAll("\\+", "_")
+    .replaceAll("\\^", "_")
+    .replaceAll("\\=", "_")
+  )
   val memory: Optional[String] = params.getOptional("memory", classOf[String])
   val networkMode: Optional[String] = params.getOptional("network_mode", classOf[String])
   // NOTE: Use `ecs_task.run>`'s one.
