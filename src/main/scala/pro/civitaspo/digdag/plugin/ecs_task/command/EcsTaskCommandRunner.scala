@@ -9,7 +9,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
 import scala.collection.JavaConverters._
 
-case class EcsTaskCommandRunner(params: Config, environments: Map[String, String], awsConf: AwsConf, logger: Logger) {
+case class EcsTaskCommandRunner(scriptsLocationPrefix: AmazonS3URI, script: String, params: Config, environments: Map[String, String], awsConf: AwsConf, logger: Logger) {
 
   val cf: ConfigFactory = params.getFactory
 
@@ -91,22 +91,22 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
   // For ecs_task.wait operator
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
 
-  def run(scriptsLocationPrefix: AmazonS3URI): TaskResult = {
+  def run(): TaskResult = {
     val subTasks: Config = cf.create()
-    subTasks.setNested("+register", ecsTaskRegisterSubTask(scriptsLocationPrefix))
+    subTasks.setNested("+register", ecsTaskRegisterSubTask())
     subTasks.setNested("+run", ecsTaskRunInternalSubTask())
     subTasks.setNested("+wait", ecsTaskWaitSubTask())
-    subTasks.setNested("+result", ecsTaskResultSubTask(scriptsLocationPrefix))
+    subTasks.setNested("+result", ecsTaskResultSubTask())
 
     val builder = TaskResult.defaultBuilder(cf)
     builder.subtaskConfig(subTasks)
     builder.build()
   }
 
-  protected def ecsTaskRegisterSubTask(scriptsLocationPrefix: AmazonS3URI): Config = {
+  protected def ecsTaskRegisterSubTask(): Config = {
     withDefaultSubTask { subTask =>
       subTask.set("_type", "ecs_task.register")
-      subTask.set("_command", taskDefinitionConfig(scriptsLocationPrefix))
+      subTask.set("_command", taskDefinitionConfig())
     }
   }
 
@@ -137,10 +137,10 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
     }
   }
 
-  protected def ecsTaskResultSubTask(resultLocationPrefix: AmazonS3URI): Config = {
+  protected def ecsTaskResultSubTask(): Config = {
     withDefaultSubTask { subTask =>
       subTask.set("_type", "ecs_task.command_result_internal")
-      subTask.set("_command", resultLocationPrefix.toString)
+      subTask.set("_command", scriptsLocationPrefix.toString)
     }
   }
 
@@ -158,10 +158,10 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
     subTask
   }
 
-  protected def taskDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
+  protected def taskDefinitionConfig(): Config = {
     val c: Config = cf.create()
 
-    c.set("container_definitions", (Seq(containerDefinitionConfig(scriptsLocationPrefix)) ++ sidecars).asJava)
+    c.set("container_definitions", (Seq(containerDefinitionConfig()) ++ sidecars).asJava)
     c.setOptional("cpu", cpu)
     c.setOptional("execution_role_arn", executionRoleArn)
     c.set("family", family)
@@ -174,10 +174,10 @@ case class EcsTaskCommandRunner(params: Config, environments: Map[String, String
     c
   }
 
-  protected def containerDefinitionConfig(scriptsLocationPrefix: AmazonS3URI): Config = {
+  protected def containerDefinitionConfig(): Config = {
     val c: Config = cf.create()
 
-    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/run.sh ./ && sh run.sh")
+    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/$script ./ && sh $script")
     logger.info(s"Run in the container: ${command.mkString(" ")}")
     c.set("command", command.asJava)
     c.setOptional("disable_networking", disableNetworking)

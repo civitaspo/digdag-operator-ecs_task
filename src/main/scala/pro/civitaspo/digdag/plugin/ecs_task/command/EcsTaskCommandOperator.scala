@@ -4,14 +4,15 @@ import io.digdag.spi.TaskResult
 
 trait EcsTaskCommandOperator {
 
-  val runner: EcsTaskCommandRunner
+  def createRunner(): EcsTaskCommandRunner
 
   def additionalEnvironments(): Map[String, String]
 
-  def uploadScript(): AmazonS3URI
+  def prepare(): Unit
 
   def runTask(): TaskResult = {
-    runner.run(scriptsLocationPrefix = uploadScript())
+    prepare()
+    createRunner().run()
   }
 
 }

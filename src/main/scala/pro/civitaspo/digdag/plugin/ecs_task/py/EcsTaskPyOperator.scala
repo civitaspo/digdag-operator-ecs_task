@@ -14,7 +14,6 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.language.reflectiveCalls
 import scala.util.Random
-import scala.util.hashing.MurmurHash3
 
 class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
@@ -27,13 +26,21 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   protected val workspaceS3UriPrefix: AmazonS3URI = {
     val parent: String = params.get("workspace_s3_uri_prefix", classOf[String])
     val random: String = Random.alphanumeric.take(10).mkString
-    if (parent.endsWith("/")) AmazonS3UriWrapper(s"${parent}ecs_task.py.$sessionUuid.$random")
-    else AmazonS3UriWrapper(s"$parent/ecs_task.py.$sessionUuid.$random")
+    if (parent.endsWith("/")) AmazonS3UriWrapper(s"$parent$operatorName.$sessionUuid.$random")
+    else AmazonS3UriWrapper(s"$parent/$operatorName.$sessionUuid.$random")
   }
   protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 
-  override val runner: EcsTaskCommandRunner =
-    EcsTaskCommandRunner(params = params, environments = additionalEnvironments(), awsConf = aws.conf, logger = logger)
+  override def createRunner(): EcsTaskCommandRunner = {
+    EcsTaskCommandRunner(
+      scriptsLocationPrefix = workspaceS3UriPrefix,
+      script = "run.sh",
+      params = params,
+      environments = additionalEnvironments(),
+      awsConf = aws.conf,
+      logger = logger
+    )
+  }
 
   override def additionalEnvironments(): Map[String, String] = {
     val vars = context.getPrivilegedVariables
@@ -44,7 +51,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     builder.result()
   }
 
-  override def uploadScript(): AmazonS3URI = {
+  override def prepare(): Unit = {
     withTempDir(operatorName) { tempDir: Path =>
       createInFile(tempDir)
       createRunnerPyFile(tempDir)
@@ -52,7 +59,6 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
       createWorkspaceDir(tempDir)
       uploadOnS3(tempDir)
     }
-    workspaceS3UriPrefix
   }
 
   protected def createInFile(parent: Path): Unit = {
