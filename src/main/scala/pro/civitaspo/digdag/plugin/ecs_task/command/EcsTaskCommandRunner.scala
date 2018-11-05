@@ -9,7 +9,14 @@ import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
 import scala.collection.JavaConverters._
 
-case class EcsTaskCommandRunner(scriptsLocationPrefix: AmazonS3URI, script: String, params: Config, environments: Map[String, String], awsConf: AwsConf, logger: Logger) {
+case class EcsTaskCommandRunner(
+  scriptsLocationPrefix: AmazonS3URI,
+  script: String,
+  params: Config,
+  environments: Map[String, String],
+  awsConf: AwsConf,
+  logger: Logger
+) {
 
   val cf: ConfigFactory = params.getFactory
 
@@ -183,7 +190,7 @@ case class EcsTaskCommandRunner(scriptsLocationPrefix: AmazonS3URI, script: Stri
     c.setOptional("disable_networking", disableNetworking)
     c.set("dns_search_domains", dnsSearchDomains.asJava)
     c.set("dns_servers", dnsServers.asJava)
-    val additionalLabels: Map[String, String] = Map("pro.civitaspo.digdag.plugin.ecs_task.version" -> "0.0.3")
+    val additionalLabels: Map[String, String] = Map("pro.civitaspo.digdag.plugin.ecs_task.version" -> "0.0.4")
     c.set("docker_labels", (dockerLabels ++ additionalLabels).asJava)
     c.set("entry_point", entryPoint.asJava)
     c.set("environment", (configEnvironment ++ environments).asJava)
