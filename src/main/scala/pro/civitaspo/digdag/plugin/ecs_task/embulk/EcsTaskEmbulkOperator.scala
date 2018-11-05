@@ -1,4 +1,5 @@
-package pro.civitaspo.digdag.plugin.ecs_task.py
+package pro.civitaspo.digdag.plugin.ecs_task.embulk
+import java.io.File
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
@@ -13,24 +14,32 @@ import pro.civitaspo.digdag.plugin.ecs_task.util.{TryWithResource, WorkspaceWith
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.language.reflectiveCalls
-import scala.util.Random
+import scala.util.{Random, Try}
 
-class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
+class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
     with EcsTaskCommandOperator {
 
-  private val runnerPyResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/runner.py"
-  private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/run.sh"
+  private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/embulk/run.sh"
 
-  protected val command: String = params.get("_command", classOf[String])
+  protected val embulkConfig: String = {
+    val t: Try[String] = Try {
+      val embulkConfigPath: String = params.get("_command", classOf[String])
+      val f: File = workspace.getFile(embulkConfigPath)
+      workspace.templateFile(templateEngine, f.getPath, UTF_8, params)
+    }
+    t.getOrElse {
+      val embulkConfig: Config = params.getNested("_command")
+      templateEngine.template(embulkConfig.toString, params)
+    }
+  }
   protected val workspaceS3UriPrefix: AmazonS3URI = {
     val parent: String = params.get("workspace_s3_uri_prefix", classOf[String])
     val random: String = Random.alphanumeric.take(10).mkString
     if (parent.endsWith("/")) AmazonS3UriWrapper(s"$parent$operatorName.$sessionUuid.$random")
     else AmazonS3UriWrapper(s"$parent/$operatorName.$sessionUuid.$random")
   }
-  protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
+  protected val embulkPlugins: Seq[String] = params.getListOrEmpty("embulk_plugins", classOf[String]).asScala
 
   override def createRunner(): EcsTaskCommandRunner = {
     EcsTaskCommandRunner(
@@ -51,45 +60,33 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     }
     builder.result()
   }
-
   override def prepare(): Unit = {
     WorkspaceWithTempDir(workspace) { tempDir: Path =>
-      createInFile(tempDir)
-      createRunnerPyFile(tempDir)
+      createConfigFile(tempDir)
       createRunShFile(tempDir)
       createWorkspaceDir(tempDir)
       uploadOnS3(tempDir)
     }
   }
 
-  protected def createInFile(parent: Path): Unit = {
-    val inContent: String = templateEngine.template(cf.create.set("params", params).toString, params)
-    val inFile: Path = Files.createFile(parent.resolve("in.json"))
-    writeFile(file = inFile, content = inContent)
-  }
-
-  protected def createRunnerPyFile(parent: Path): Unit = {
-    TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runnerPyResourcePath)) { is =>
-      val runnerPyContent: String = Source.fromInputStream(is).mkString
-      val runnerPyFile: Path = Files.createFile(parent.resolve("runner.py"))
-      writeFile(file = runnerPyFile, content = runnerPyContent)
-    }
+  protected def createConfigFile(parent: Path): Unit = {
+    val configFile: Path = Files.createFile(parent.resolve("config.yml"))
+    writeFile(file = configFile, content = embulkConfig)
   }
 
   protected def createRunShFile(parent: Path): Unit = {
     val dup: Config = params.deepCopy()
-    dup.set("ECS_TASK_PY_BUCKET", workspaceS3UriPrefix.getBucket)
-    dup.set("ECS_TASK_PY_PREFIX", workspaceS3UriPrefix.getKey)
-    dup.set("ECS_TASK_PY_COMMAND", command)
+    dup.set("ECS_TASK_EMBULK_BUCKET", workspaceS3UriPrefix.getBucket)
+    dup.set("ECS_TASK_EMBULK_PREFIX", workspaceS3UriPrefix.getKey)
 
-    dup.set("ECS_TASK_PY_SETUP_COMMAND", "echo 'no setup command'") // set a default value
-    if (pipInstall.nonEmpty) {
-      logger.warn("`pip_install` option is experimental, so please be careful in the plugin update.")
-      val cmd: String = (Seq("pip", "install") ++ pipInstall).mkString(" ")
-      dup.set("ECS_TASK_PY_SETUP_COMMAND", cmd)
+    dup.set("ECS_TASK_EMBULK_SETUP_COMMAND", "echo 'no setup command'") // set a default value
+    if (embulkPlugins.nonEmpty) {
+      logger.warn("`embulk_plugins` option is experimental, so please be careful in the plugin update.")
+      val cmd: String = (Seq("embulk", "gem", "install") ++ embulkPlugins).mkString(" ")
+      dup.set("ECS_TASK_EMBULK_SETUP_COMMAND", cmd)
     }
 
-    TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runShResourcePath)) { is =>
+    TryWithResource(classOf[EcsTaskEmbulkOperator].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
       val runShContent: String = templateEngine.template(runShContentTemplate, dup)
       val runShFile: Path = Files.createFile(parent.resolve("run.sh"))
@@ -126,5 +123,4 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
       writer.write(content)
     }
   }
-
 }

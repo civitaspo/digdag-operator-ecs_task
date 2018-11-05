@@ -1,5 +1,12 @@
+0.0.4 (2018-11-06)
+==================
+
+* [Experimental] Implement `ecs_task.embulk>` operator.
+* [Enhancement] Write README for scripting operators.
+* [Enhancement] Make family name more configuable for scripting operators.
+
 0.0.3 (2018-10-30)
-======================
+==================
 
 * [Breaking Change] Do not use enum parameter directory because the enums require upper camel case ( `ecs_task.{py,register,run}>` operator)
 * [Enhancement] Rename the configuration key: `additional_containers` to `sidecars` ( `ecs_task.py>` operator)
@@ -16,7 +23,7 @@
 0.0.2 (2018-10-29)
 ==================
 
-* [Experimental] Implement ecs_task.py> operator. (No document yet)
+* [Experimental] Implement `ecs_task.py>` operator. (No document yet)
 * [Fix] Stop correctly after task run to shutdown TransferManager after processing.
 
 0.0.1 (2018-10-23)

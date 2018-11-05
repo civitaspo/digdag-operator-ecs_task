@@ -20,9 +20,11 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
     val exitCode: Int = statusParams.get("exit_code", classOf[Int])
 
     if (exitCode != 0) {
-      val errorMessage: String = statusParams.get("error_message", classOf[String])
-      val errorStackTrace: String = statusParams.get("error_stacktrace", classOf[String])
-      throw new RuntimeException(s"message: $errorMessage, stacktrace: $errorStackTrace")
+      val errorMessage: String = statusParams.get("error_message", classOf[String], "")
+      val errorStackTrace: String = statusParams.get("error_stacktrace", classOf[String], "")
+      val stdout: String = Try(loadStdoutLogContent()).getOrElse("")
+      val stderr: String = Try(loadStderrLogContent()).getOrElse("")
+      throw new RuntimeException(s"message: '$errorMessage',\nstacktrace: '$errorStackTrace',\nstdout: '$stdout'\nstderr: '$stderr'")
     }
 
     TaskResult
