@@ -195,12 +195,20 @@ In addition, the below configurations exist.
     - The configuration map is the same as the snake-cased [API_PlacementStrategy](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PlacementStrategy.html).
 - **platform_version**: The platform version on which to run your task. If one is not specified, the latest version is used by default. (string, optional)
 - **started_by**: An optional tag specified when a task is started. (string, optional)
+- **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
+    - Currently, input params, output params, stdout, stderr, and internal scripts are put on S3, and then they are not removed. So it's insecure unless strict access control to S3.
 
 ## Configuration for `ecs_task.py>` operator
 
 - **ecs_task.py>**: Name of a method to run. The format is `[PACKAGE.CLASS.]METHOD`. (string, required)
-- **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
 - **pip_install**: packages to install before task running. (array of string, optional)
+
+## Configuration for `ecs_task.embulk>` operator
+
+- **ecs_task.embulk>**: Embulk config yaml or file. You can use digdag's template engine like `${...}` in the config yaml or file. (string or map, required)
+    - For more information, see [Embulk Docs](http://www.embulk.org/docs/index.html).
+- **embulk_plugins**: packages to install before task running. (array of string, optional)
+    - You can see the plugins in [Embulk Plugins](http://www.embulk.org/plugins/).
 
 # Development
 
