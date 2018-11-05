@@ -55,7 +55,8 @@ class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, syst
   override def additionalEnvironments(): Map[String, String] = {
     val vars = context.getPrivilegedVariables
     val builder = Map.newBuilder[String, String]
-    vars.getKeys.asScala.foreach { k => builder += (k -> vars.get(k))
+    vars.getKeys.asScala.foreach { k =>
+      builder += (k -> vars.get(k))
     }
     builder.result()
   }
@@ -118,7 +119,8 @@ class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, syst
 
   protected def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer => writer.write(content)
+    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+      writer.write(content)
     }
   }
 }
