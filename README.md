@@ -203,6 +203,13 @@ In addition, the below configurations exist.
 - **ecs_task.py>**: Name of a method to run. The format is `[PACKAGE.CLASS.]METHOD`. (string, required)
 - **pip_install**: packages to install before task running. (array of string, optional)
 
+## Configuration for `ecs_task.embulk>` operator
+
+- **ecs_task.embulk>**: Embulk config yaml or file. You can use digdag's template engine like `${...}` in the config yaml or file. (string or map, required)
+    - For more information, see [Embulk Docs](http://www.embulk.org/docs/index.html).
+- **embulk_plugins**: packages to install before task running. (array of string, optional)
+    - You can see the plugins in [Embulk Plugins](http://www.embulk.org/plugins/).
+
 # Development
 
 ## Run an Example
