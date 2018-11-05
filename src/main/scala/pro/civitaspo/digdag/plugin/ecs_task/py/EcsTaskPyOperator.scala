@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, EcsTaskCommandRunner}
+import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -68,7 +69,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   }
 
   protected def createRunnerPyFile(parent: Path): Unit = {
-    using(classOf[EcsTaskPyOperator].getResourceAsStream(runnerPyResourcePath)) { is =>
+    TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runnerPyResourcePath)) { is =>
       val runnerPyContent: String = Source.fromInputStream(is).mkString
       val runnerPyFile: Path = Files.createFile(parent.resolve("runner.py"))
       writeFile(file = runnerPyFile, content = runnerPyContent)
@@ -88,7 +89,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
       dup.set("ECS_TASK_PY_SETUP_COMMAND", cmd)
     }
 
-    using(classOf[EcsTaskPyOperator].getResourceAsStream(runShResourcePath)) { is =>
+    TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
       val runShContent: String = templateEngine.template(runShContentTemplate, dup)
       val runShFile: Path = Files.createFile(parent.resolve("run.sh"))
@@ -121,14 +122,9 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
 
   protected def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-    using(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
       writer.write(content)
     }
-  }
-
-  protected def using[A <: { def close() }, B](resource: A)(f: A => B): B = {
-    try f(resource)
-    finally resource.close()
   }
 
   // ref. https://github.com/muga/digdag/blob/aff3dfab0b91aa6787d7921ce34d5b3b21947c20/digdag-plugin-utils/src/main/java/io/digdag/util/Workspace.java#L84-L95
