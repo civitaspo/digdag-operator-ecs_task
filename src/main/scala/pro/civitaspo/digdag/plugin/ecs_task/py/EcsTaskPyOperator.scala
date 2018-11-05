@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, EcsTaskCommandRunner}
-import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
+import pro.civitaspo.digdag.plugin.ecs_task.util.{TryWithResource, WorkspaceWithTempDir}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -53,7 +53,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   }
 
   override def prepare(): Unit = {
-    withTempDir(operatorName) { tempDir: Path =>
+    WorkspaceWithTempDir(workspace) { tempDir: Path =>
       createInFile(tempDir)
       createRunnerPyFile(tempDir)
       createRunShFile(tempDir)
@@ -125,15 +125,6 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
     TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
       writer.write(content)
     }
-  }
-
-  // ref. https://github.com/muga/digdag/blob/aff3dfab0b91aa6787d7921ce34d5b3b21947c20/digdag-plugin-utils/src/main/java/io/digdag/util/Workspace.java#L84-L95
-  protected def withTempDir[T](prefix: String)(f: Path => T): T = {
-    val dir = workspace.getProjectPath.resolve(".digdag/tmp")
-    Files.createDirectories(dir)
-    val tempDir: Path = Files.createTempDirectory(dir, prefix)
-    try f(tempDir)
-    finally FileUtils.deleteDirectory(tempDir.toFile)
   }
 
 }
