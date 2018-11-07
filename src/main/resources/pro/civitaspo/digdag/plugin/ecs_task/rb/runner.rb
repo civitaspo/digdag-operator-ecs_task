@@ -1,3 +1,8 @@
+#########
+# Copy from https://raw.githubusercontent.com/treasure-data/digdag/390663b/digdag-standards/src/main/resources/digdag/standards/rb/runner.rb
+# Then, customize a bit about error handling
+#########
+
 require 'json'
 
 command = ARGV[0]
@@ -257,28 +262,52 @@ def digdag_symbolize_keys(hash)
   return built
 end
 
+def with_error_handler(receiver, method_name, *method_args)
+  status_params = {}
+  begin
+    results =
+      if receiver
+        receiver.send(method_name, *method_args)
+      else
+        send(method_name, *method_args)
+      end
+    status_params['exit_code'] = 0
+    return results, status_params
+  rescue => e
+    status_params['exit_code'] = 1
+    status_params['error_message'] = e.message
+    status_params['error_stacktrace'] = e.backtrace.join("\n")
+    puts("message: #{e}, stacktrace: #{e.backtrace.join("\n")}")
+    return nil, status_params
+  end
+end
+
 klass, method_name, is_instance_method = digdag_inspect_command(command)
 
 if klass.nil?
   method_args = digdag_inspect_arguments(nil, method_name, DigdagEnv::PARAMS)
-  result = send(method_name, *method_args)
+  # result = send(method_name, *method_args)
+  result, status_params = with_error_handler(nil, method_name, *method_args)
 
 elsif is_instance_method
   new_args = digdag_inspect_arguments(klass, :new, DigdagEnv::PARAMS)
   instance = klass.new(*new_args)
 
   method_args = digdag_inspect_arguments(instance, method_name, DigdagEnv::PARAMS)
-  result = instance.send(method_name, *method_args)
+  # result = instance.send(method_name, *method_args)
+  result, status_params = with_error_handler(instance, method_name, *method_args)
 
 else
   method_args = digdag_inspect_arguments(klass, method_name, DigdagEnv::PARAMS)
-  result = klass.send(method_name, *method_args)
+  # result = klass.send(method_name, *method_args)
+  result, status_params = with_error_handler(klass, method_name, *method_args)
 end
 
 out = {
   'subtask_config' => DigdagEnv::SUBTASK_CONFIG,
   'export_params' => DigdagEnv::EXPORT_PARAMS,
   'store_params' => DigdagEnv::STORE_PARAMS,
+  'status_params' => status_params, # only for ecs_task.command_result_internal
   #'state_params' => DigdagEnv::STATE_PARAMS,  # only for retrying
 }
 
