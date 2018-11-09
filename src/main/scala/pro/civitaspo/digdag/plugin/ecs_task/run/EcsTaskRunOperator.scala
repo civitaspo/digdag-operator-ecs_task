@@ -35,7 +35,10 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
   protected def ecsTaskRunInternalSubTask(): Config = {
     val config: Config = params.deepCopy()
     Seq("def", "result_s3_uri_prefix", "timeout").foreach(config.remove)
-    if (taskDef.isPresent) config.set("task_definition", "${last_ecs_task_register.task_definition_arn}")
+    if (taskDef.isPresent) {
+      if (config.has("last_ecs_task_register")) config.remove("last_ecs_task_register")
+      config.set("task_definition", "${last_ecs_task_register.task_definition_arn}")
+    }
     withDefaultSubTask { subTask =>
       subTask.set("_type", "ecs_task.run_internal")
       subTask.set("_export", config)
