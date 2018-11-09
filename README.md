@@ -203,6 +203,12 @@ In addition, the below configurations exist.
 - **ecs_task.py>**: Name of a method to run. The format is `[PACKAGE.CLASS.]METHOD`. (string, required)
 - **pip_install**: packages to install before task running. (array of string, optional)
 
+## Configuration for `ecs_task.rb>` operator
+
+- **ecs_task.rb>**: Name of a method to run. The format is `[MODULE::CLASS.]METHOD`. (string, required)
+- **gem_install**: packages to install before task running. (array of string, optional)
+- **require**: Name of a file to require. e.g. `require: task/my_workflow` (string, required)
+
 ## Configuration for `ecs_task.embulk>` operator
 
 - **ecs_task.embulk>**: Embulk config yaml or file. You can use digdag's template engine like `${...}` in the config yaml or file. (string or map, required)
