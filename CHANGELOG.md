@@ -1,3 +1,15 @@
+0.0.5 (2018-11-13)
+==================
+
+* [Experimental] Implement `ecs_task.rb>` operator.
+* [Experimental] Implement `ecs_task.sh>` operator.
+* [Enhancement] Add interface for another storage except S3 used by scripting operators.
+* [Enhancement] Add abstract class for scripting operators.
+* [Enhancement] Request ECS TaskRun with some retry.
+* [Fix] Prevent the influence of prior task registration.
+* [Enhancement] Add Logging for registered TaskDefinition arn. 
+* [Enhancement] Define VERSION var as package object val.
+
 0.0.4 (2018-11-06)
 ==================
 
