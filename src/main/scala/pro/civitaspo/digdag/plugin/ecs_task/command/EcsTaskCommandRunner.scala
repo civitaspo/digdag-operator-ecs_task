@@ -1,5 +1,4 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
-import com.amazonaws.services.s3.AmazonS3URI
 import com.google.common.base.Optional
 import io.digdag.client.config.{Config, ConfigFactory}
 import io.digdag.spi.TaskResult
@@ -11,8 +10,8 @@ import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 import scala.collection.JavaConverters._
 
 case class EcsTaskCommandRunner(
-  scriptsLocationPrefix: AmazonS3URI,
-  script: String,
+  tmpStorage: TmpStorage,
+  mainScript: String,
   params: Config,
   environments: Map[String, String],
   awsConf: AwsConf,
@@ -148,7 +147,7 @@ case class EcsTaskCommandRunner(
   protected def ecsTaskResultSubTask(): Config = {
     withDefaultSubTask { subTask =>
       subTask.set("_type", "ecs_task.command_result_internal")
-      subTask.set("_command", scriptsLocationPrefix.toString)
+      subTask.set("_command", tmpStorage.getLocation)
     }
   }
 
@@ -185,7 +184,7 @@ case class EcsTaskCommandRunner(
   protected def containerDefinitionConfig(): Config = {
     val c: Config = cf.create()
 
-    val command: Seq[String] = Seq("sh", "-c", s"aws s3 cp ${scriptsLocationPrefix.toString}/$script ./ && sh $script")
+    val command: Seq[String] = tmpStorage.buildTaskCommand(mainScript)
     logger.info(s"Run in the container: ${command.mkString(" ")}")
     c.set("command", command.asJava)
     c.setOptional("disable_networking", disableNetworking)
