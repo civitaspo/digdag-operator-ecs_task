@@ -1,85 +1,45 @@
 package pro.civitaspo.digdag.plugin.ecs_task.py
-import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path}
-
-import com.amazonaws.services.s3.AmazonS3URI
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}
-import org.apache.commons.io.FileUtils
-import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
-import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, EcsTaskCommandRunner}
-import pro.civitaspo.digdag.plugin.ecs_task.util.{TryWithResource, WorkspaceWithTempDir}
+import pro.civitaspo.digdag.plugin.ecs_task.command.{AbstractEcsTaskCommandOperator, TmpStorage}
+import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.language.reflectiveCalls
-import scala.util.Random
 
 class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
-    with EcsTaskCommandOperator {
+    extends AbstractEcsTaskCommandOperator(operatorName, context, systemConfig, templateEngine) {
 
   private val runnerPyResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/runner.py"
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/py/run.sh"
+  override protected val mainScriptName: String = "run.sh"
 
   protected val command: String = params.get("_command", classOf[String])
-  protected val workspaceS3UriPrefix: AmazonS3URI = {
-    val parent: String = params.get("workspace_s3_uri_prefix", classOf[String])
-    val random: String = Random.alphanumeric.take(10).mkString
-    if (parent.endsWith("/")) AmazonS3UriWrapper(s"$parent$operatorName.$sessionUuid.$random")
-    else AmazonS3UriWrapper(s"$parent/$operatorName.$sessionUuid.$random")
-  }
   protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
 
-  override def createRunner(): EcsTaskCommandRunner = {
-    EcsTaskCommandRunner(
-      scriptsLocationPrefix = workspaceS3UriPrefix,
-      script = "run.sh",
-      params = params,
-      environments = additionalEnvironments(),
-      awsConf = aws.conf,
-      logger = logger
-    )
+  override def prepare(tmpStorage: TmpStorage): Unit = {
+    tmpStorage.stageFile("in.json", createInJsonContent())
+    tmpStorage.stageFile("runner.py", createRunnerPyContent())
+    tmpStorage.stageFile(mainScriptName, createRunShContent(tmpStorage))
+    tmpStorage.stageWorkspace()
+    tmpStorage.storeStagedFiles()
   }
 
-  override def additionalEnvironments(): Map[String, String] = {
-    val vars = context.getPrivilegedVariables
-    val builder = Map.newBuilder[String, String]
-    vars.getKeys.asScala.foreach { k =>
-      builder += (k -> vars.get(k))
-    }
-    builder.result()
+  protected def createInJsonContent(): String = {
+    templateEngine.template(cf.create.set("params", params).toString, params)
   }
 
-  override def prepare(): Unit = {
-    WorkspaceWithTempDir(workspace) { tempDir: Path =>
-      createInFile(tempDir)
-      createRunnerPyFile(tempDir)
-      createRunShFile(tempDir)
-      createWorkspaceDir(tempDir)
-      uploadOnS3(tempDir)
-    }
-  }
-
-  protected def createInFile(parent: Path): Unit = {
-    val inContent: String = templateEngine.template(cf.create.set("params", params).toString, params)
-    val inFile: Path = Files.createFile(parent.resolve("in.json"))
-    writeFile(file = inFile, content = inContent)
-  }
-
-  protected def createRunnerPyFile(parent: Path): Unit = {
+  protected def createRunnerPyContent(): String = {
     TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runnerPyResourcePath)) { is =>
-      val runnerPyContent: String = Source.fromInputStream(is).mkString
-      val runnerPyFile: Path = Files.createFile(parent.resolve("runner.py"))
-      writeFile(file = runnerPyFile, content = runnerPyContent)
+      Source.fromInputStream(is).mkString
     }
   }
 
-  protected def createRunShFile(parent: Path): Unit = {
+  protected def createRunShContent(tmpStorage: TmpStorage): String = {
     val dup: Config = params.deepCopy()
-    dup.set("ECS_TASK_PY_BUCKET", workspaceS3UriPrefix.getBucket)
-    dup.set("ECS_TASK_PY_PREFIX", workspaceS3UriPrefix.getKey)
+    dup.set("ECS_TASK_PY_BUCKET", AmazonS3UriWrapper(tmpStorage.getLocation).getBucket)
+    dup.set("ECS_TASK_PY_PREFIX", AmazonS3UriWrapper(tmpStorage.getLocation).getKey)
     dup.set("ECS_TASK_PY_COMMAND", command)
 
     dup.set("ECS_TASK_PY_SETUP_COMMAND", "echo 'no setup command'") // set a default value
@@ -91,40 +51,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
 
     TryWithResource(classOf[EcsTaskPyOperator].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
-      val runShContent: String = templateEngine.template(runShContentTemplate, dup)
-      val runShFile: Path = Files.createFile(parent.resolve("run.sh"))
-      writeFile(file = runShFile, content = runShContent)
+      templateEngine.template(runShContentTemplate, dup)
     }
   }
-
-  protected def createWorkspaceDir(parent: Path): Unit = {
-    val targets: Iterator[Path] = Files.list(workspace.getPath).iterator().asScala.filterNot(_.endsWith(".digdag"))
-    val workspacePath: Path = Files.createDirectory(parent.resolve("workspace"))
-    targets.foreach { path =>
-      logger.info(s"Copy: $path -> $workspacePath")
-      if (Files.isDirectory(path)) FileUtils.copyDirectoryToDirectory(path.toFile, workspacePath.toFile)
-      else FileUtils.copyFileToDirectory(path.toFile, workspacePath.toFile)
-    }
-  }
-
-  protected def uploadOnS3(path: Path): Unit = {
-    logger.info(s"Recursive Upload: $path -> ${workspaceS3UriPrefix.getURI}")
-    aws.withTransferManager { xfer =>
-      val upload = xfer.uploadDirectory(
-        workspaceS3UriPrefix.getBucket,
-        workspaceS3UriPrefix.getKey,
-        path.toFile,
-        true // includeSubdirectories
-      )
-      upload.waitForCompletion()
-    }
-  }
-
-  protected def writeFile(file: Path, content: String): Unit = {
-    logger.info(s"Write into ${file.toString}")
-    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
-      writer.write(content)
-    }
-  }
-
 }

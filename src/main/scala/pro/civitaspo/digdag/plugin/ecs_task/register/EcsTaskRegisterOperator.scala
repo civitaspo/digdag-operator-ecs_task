@@ -389,6 +389,8 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val result: RegisterTaskDefinitionResult = aws.withEcs(_.registerTaskDefinition(req))
     logger.debug(result.toString)
 
+    logger.info(s"Registered: ${result.getTaskDefinition.getTaskDefinitionArn}")
+
     val paramsToStore = cf.create()
     val last_ecs_task_register: Config = paramsToStore.getNestedOrSetEmpty("last_ecs_task_register")
     last_ecs_task_register.set("task_definition_arn", result.getTaskDefinition.getTaskDefinitionArn)
