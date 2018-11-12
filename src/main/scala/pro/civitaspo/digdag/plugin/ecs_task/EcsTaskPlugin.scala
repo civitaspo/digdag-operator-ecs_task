@@ -13,6 +13,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.rb.EcsTaskRbOperator
 import pro.civitaspo.digdag.plugin.ecs_task.register.EcsTaskRegisterOperator
 import pro.civitaspo.digdag.plugin.ecs_task.result.EcsTaskResultOperator
 import pro.civitaspo.digdag.plugin.ecs_task.run.{EcsTaskRunInternalOperator, EcsTaskRunOperator}
+import pro.civitaspo.digdag.plugin.ecs_task.sh.EcsTaskShOperotar
 import pro.civitaspo.digdag.plugin.ecs_task.wait.EcsTaskWaitOperator
 
 object EcsTaskPlugin {
@@ -27,6 +28,7 @@ object EcsTaskPlugin {
         operatorFactory("ecs_task.embulk", classOf[EcsTaskEmbulkOperator]),
         operatorFactory("ecs_task.py", classOf[EcsTaskPyOperator]),
         operatorFactory("ecs_task.rb", classOf[EcsTaskRbOperator]),
+        operatorFactory("ecs_task.sh", classOf[EcsTaskShOperotar]),
         operatorFactory("ecs_task.command_result_internal", classOf[EcsTaskCommandResultInternalOperator]),
         operatorFactory("ecs_task.register", classOf[EcsTaskRegisterOperator]),
         operatorFactory("ecs_task.result", classOf[EcsTaskResultOperator]),
