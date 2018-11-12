@@ -25,7 +25,8 @@ case class S3TmpStorage(location: AmazonS3URI, aws: Aws, workspace: Workspace, l
 
   private def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer => writer.write(content)
+    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+      writer.write(content)
     }
   }
 
