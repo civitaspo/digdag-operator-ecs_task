@@ -197,6 +197,10 @@ In addition, the below configurations exist.
 - **started_by**: An optional tag specified when a task is started. (string, optional)
 - **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
     - Currently, input params, output params, stdout, stderr, and internal scripts are put on S3, and then they are not removed. So it's insecure unless strict access control to S3.
+    - This option is **deprecated**. Please use **tmp_storage** option instead.
+- **tmp_storage**: Temporary storage for the data and files scripting operator uses. (map, required)
+    - **type**: storage type. Currently, only `"s3"` is valid. (string, required)
+    - **uri**: storage uri. (string, required)
 
 ## Configuration for `ecs_task.py>` operator
 
