@@ -1,45 +1,36 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
 import com.amazonaws.services.s3.AmazonS3URI
-import io.digdag.client.config.{Config, ConfigFactory}
-import io.digdag.spi.{OperatorContext, PrivilegedVariables, TaskResult}
-import io.digdag.util.Workspace
-import org.slf4j.Logger
-import pro.civitaspo.digdag.plugin.ecs_task.aws.{AmazonS3UriWrapper, Aws}
+import io.digdag.client.config.Config
+import io.digdag.spi.{OperatorContext, PrivilegedVariables, TaskResult, TemplateEngine}
+import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
+import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.collection.JavaConverters._
 import scala.util.Random
 
-trait EcsTaskCommandOperator {
+abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
-  protected def getOperatorName: String
-  protected def getContext: OperatorContext
-  protected def getSessionUuid: String
-  protected def getConfigFactory: ConfigFactory
-  protected def getWorkspace: Workspace
-  protected def getParams: Config
-  protected def getAws: Aws
-  protected def getLogger: Logger
-
-  protected def getMainScriptName: String
+  protected val mainScriptName: String
 
   private lazy val tmpStorageConfig: Config = {
-    if (getParams.has("workspace_s3_uri_prefix") && !getParams.has("tmp_storage")) {
-      getLogger.warn("[Deprecated] Use `tmp_storage` instead of `workspace_s3_uri_prefix`")
+    if (params.has("workspace_s3_uri_prefix") && !params.has("tmp_storage")) {
+      logger.warn("[Deprecated] Use `tmp_storage` instead of `workspace_s3_uri_prefix`")
       buildTmpStorageConfigFromWorkspaceS3UriPrefix()
     }
     else {
-      if (getParams.has("workspace_s3_uri_prefix")) getLogger.info("Use `tmp_storage`, not `workspace_s3_uri_prefix`")
-      getParams.getNested("tmp_storage")
+      if (params.has("workspace_s3_uri_prefix")) logger.info("Use `tmp_storage`, not `workspace_s3_uri_prefix`")
+      params.getNested("tmp_storage")
     }
   }
 
   @deprecated
   private def buildTmpStorageConfigFromWorkspaceS3UriPrefix(): Config = {
-    getConfigFactory
+    cf
       .create()
       .set("type", "s3")
-      .set("uri", getParams.get("workspace_s3_uri_prefix", classOf[String]))
+      .set("uri", params.get("workspace_s3_uri_prefix", classOf[String]))
   }
 
   private def buildTmpStorage(): TmpStorage = {
@@ -54,14 +45,14 @@ trait EcsTaskCommandOperator {
     val uriString: String = tmpStorageConfig.get("uri", classOf[String])
     val random: String = Random.alphanumeric.take(10).mkString
     val uri: AmazonS3URI =
-      if (uriString.endsWith("/")) AmazonS3UriWrapper(s"$uriString$getOperatorName.$getSessionUuid.$random")
-      else AmazonS3UriWrapper(s"$uriString/$getOperatorName.$getSessionUuid.$random")
+      if (uriString.endsWith("/")) AmazonS3UriWrapper(s"$uriString$operatorName.$sessionUuid.$random")
+      else AmazonS3UriWrapper(s"$uriString/$operatorName.$sessionUuid.$random")
 
-    S3TmpStorage(location = uri, aws = getAws, workspace = getWorkspace, logger = getLogger)
+    S3TmpStorage(location = uri, aws = aws, workspace = workspace, logger = logger)
   }
 
   protected def collectEnvironments(): Map[String, String] = {
-    val vars: PrivilegedVariables = getContext.getPrivilegedVariables
+    val vars: PrivilegedVariables = context.getPrivilegedVariables
     vars.getKeys.asScala.foldLeft(Map.empty[String, String]) { (env, key) => env ++ Map(key -> vars.get(key))
     }
   }
@@ -69,11 +60,11 @@ trait EcsTaskCommandOperator {
   protected def createCommandRunner(tmpStorage: TmpStorage): EcsTaskCommandRunner = {
     EcsTaskCommandRunner(
       tmpStorage = tmpStorage,
-      mainScript = getMainScriptName,
-      params = getParams,
+      mainScript = mainScriptName,
+      params = params,
       environments = collectEnvironments(),
-      awsConf = getAws.conf,
-      logger = getLogger
+      awsConf = aws.conf,
+      logger = logger
     )
   }
 

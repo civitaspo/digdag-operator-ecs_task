@@ -1,35 +1,22 @@
 package pro.civitaspo.digdag.plugin.ecs_task.sh
-import io.digdag.client.config.{Config, ConfigFactory}
+import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}
-import io.digdag.util.Workspace
-import org.slf4j.Logger
-import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
-import pro.civitaspo.digdag.plugin.ecs_task.aws.{AmazonS3UriWrapper, Aws}
-import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCommandOperator, TmpStorage}
+import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
+import pro.civitaspo.digdag.plugin.ecs_task.command.{AbstractEcsTaskCommandOperator, TmpStorage}
 import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.io.Source
 
 class EcsTaskShOperotar(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine)
-    with EcsTaskCommandOperator {
+    extends AbstractEcsTaskCommandOperator(operatorName, context, systemConfig, templateEngine) {
 
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/sh/run.sh"
+  override protected val mainScriptName: String = "run.sh"
 
   protected val command: String = params.get("_command", classOf[String])
 
-  override def getOperatorName: String = operatorName
-  override def getContext: OperatorContext = context
-  override def getConfigFactory: ConfigFactory = cf
-  override def getWorkspace: Workspace = workspace
-  override def getParams: Config = params
-  override def getSessionUuid: String = sessionUuid
-  override def getAws: Aws = aws
-  override def getLogger: Logger = logger
-  override def getMainScriptName: String = "run.sh"
-
   override def prepare(tmpStorage: TmpStorage): Unit = {
-    tmpStorage.stageFile(getMainScriptName, createRunShContent(tmpStorage))
+    tmpStorage.stageFile(mainScriptName, createRunShContent(tmpStorage))
     tmpStorage.stageWorkspace()
     tmpStorage.storeStagedFiles()
   }
