@@ -33,8 +33,8 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
 
   override def prepare(tmpStorage: TmpStorage): Unit = {
     tmpStorage.stageFile("in.json", createInJsonContent())
-    tmpStorage.stageFile(getMainScriptName, createRunShContent(tmpStorage))
     tmpStorage.stageFile("runner.py", createRunnerPyContent())
+    tmpStorage.stageFile(getMainScriptName, createRunShContent(tmpStorage))
     tmpStorage.stageWorkspace()
     tmpStorage.storeStagedFiles()
   }
