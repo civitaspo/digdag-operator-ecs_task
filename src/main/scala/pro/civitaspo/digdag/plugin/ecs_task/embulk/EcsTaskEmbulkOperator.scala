@@ -38,7 +38,7 @@ class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, syst
     tmpStorage.storeStagedFiles()
   }
 
- protected def createRunShContent(tmpStorage: TmpStorage): String = {
+  protected def createRunShContent(tmpStorage: TmpStorage): String = {
     val dup: Config = params.deepCopy()
     dup.set("ECS_TASK_EMBULK_BUCKET", AmazonS3UriWrapper(tmpStorage.getLocation).getBucket)
     dup.set("ECS_TASK_EMBULK_PREFIX", AmazonS3UriWrapper(tmpStorage.getLocation).getKey)

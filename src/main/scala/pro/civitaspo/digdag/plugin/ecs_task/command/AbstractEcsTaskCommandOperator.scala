@@ -27,8 +27,7 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
 
   @deprecated
   private def buildTmpStorageConfigFromWorkspaceS3UriPrefix(): Config = {
-    cf
-      .create()
+    cf.create()
       .set("type", "s3")
       .set("uri", params.get("workspace_s3_uri_prefix", classOf[String]))
   }
@@ -53,7 +52,8 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
 
   protected def collectEnvironments(): Map[String, String] = {
     val vars: PrivilegedVariables = context.getPrivilegedVariables
-    vars.getKeys.asScala.foldLeft(Map.empty[String, String]) { (env, key) => env ++ Map(key -> vars.get(key))
+    vars.getKeys.asScala.foldLeft(Map.empty[String, String]) { (env, key) =>
+      env ++ Map(key -> vars.get(key))
     }
   }
 
