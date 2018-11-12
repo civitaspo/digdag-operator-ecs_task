@@ -197,11 +197,21 @@ In addition, the below configurations exist.
 - **started_by**: An optional tag specified when a task is started. (string, optional)
 - **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
     - Currently, input params, output params, stdout, stderr, and internal scripts are put on S3, and then they are not removed. So it's insecure unless strict access control to S3.
+    - This option is **deprecated**. Please use **tmp_storage** option instead.
+- **tmp_storage**: Temporary storage for the data and files scripting operator uses. (map, required)
+    - **type**: storage type. Currently, only `"s3"` is valid. (string, required)
+    - **uri**: storage uri. (string, required)
 
 ## Configuration for `ecs_task.py>` operator
 
 - **ecs_task.py>**: Name of a method to run. The format is `[PACKAGE.CLASS.]METHOD`. (string, required)
 - **pip_install**: packages to install before task running. (array of string, optional)
+
+## Configuration for `ecs_task.rb>` operator
+
+- **ecs_task.rb>**: Name of a method to run. The format is `[MODULE::CLASS.]METHOD`. (string, required)
+- **gem_install**: packages to install before task running. (array of string, optional)
+- **require**: Name of a file to require. e.g. `require: task/my_workflow` (string, required)
 
 ## Configuration for `ecs_task.embulk>` operator
 

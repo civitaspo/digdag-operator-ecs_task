@@ -9,6 +9,7 @@ import javax.inject.Inject
 import pro.civitaspo.digdag.plugin.ecs_task.command.EcsTaskCommandResultInternalOperator
 import pro.civitaspo.digdag.plugin.ecs_task.embulk.EcsTaskEmbulkOperator
 import pro.civitaspo.digdag.plugin.ecs_task.py.EcsTaskPyOperator
+import pro.civitaspo.digdag.plugin.ecs_task.rb.EcsTaskRbOperator
 import pro.civitaspo.digdag.plugin.ecs_task.register.EcsTaskRegisterOperator
 import pro.civitaspo.digdag.plugin.ecs_task.result.EcsTaskResultOperator
 import pro.civitaspo.digdag.plugin.ecs_task.run.{EcsTaskRunInternalOperator, EcsTaskRunOperator}
@@ -25,6 +26,7 @@ object EcsTaskPlugin {
       JArrays.asList(
         operatorFactory("ecs_task.embulk", classOf[EcsTaskEmbulkOperator]),
         operatorFactory("ecs_task.py", classOf[EcsTaskPyOperator]),
+        operatorFactory("ecs_task.rb", classOf[EcsTaskRbOperator]),
         operatorFactory("ecs_task.command_result_internal", classOf[EcsTaskCommandResultInternalOperator]),
         operatorFactory("ecs_task.register", classOf[EcsTaskRegisterOperator]),
         operatorFactory("ecs_task.result", classOf[EcsTaskResultOperator]),
