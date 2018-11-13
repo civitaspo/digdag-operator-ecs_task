@@ -1,3 +1,8 @@
+0.0.6 (2018-11-13)
+==================
+
+* [Enhancement] Enable to use params as env for `ecs_task.sh`
+
 0.0.5 (2018-11-13)
 ==================
 
