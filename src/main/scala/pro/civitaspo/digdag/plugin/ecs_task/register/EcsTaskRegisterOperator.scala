@@ -94,7 +94,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val interactive: Optional[Boolean] = c.getOptional("interactive", classOf[Boolean])
     val links: Seq[String] = c.parseListOrGetEmpty("links", classOf[String]).asScala
     val linuxParameters: Optional[LinuxParameters] = configureLinuxParameters(c.parseNestedOrGetEmpty("linux_parameters"))
-    val logConfiguration: Optional[LogConfiguration] = configureLogConfiguration(c.parseNestedOrGetEmpty("log_configuration"))
+    val logConfiguration: Option[LogConfiguration] = configureLogConfiguration(c.parseNestedOrGetEmpty("log_configuration"))
     val memory: Optional[Int] = c.getOptional("memory", classOf[Int])
     val memoryReservation: Optional[Int] = c.getOptional("memory_reservation", classOf[Int])
     val mountPoints: Seq[MountPoint] = c.parseListOrGetEmpty("mount_points", classOf[Config]).asScala.map(configureMountPoint).map(_.get)
@@ -128,7 +128,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (interactive.isPresent) cd.setInteractive(interactive.get)
     if (links.nonEmpty) cd.setLinks(links.asJava)
     if (linuxParameters.isPresent) cd.setLinuxParameters(linuxParameters.get)
-    if (logConfiguration.isPresent) cd.setLogConfiguration(logConfiguration.get)
+    logConfiguration.foreach(lc => cd.setLogConfiguration(lc))
     if (memory.isPresent) cd.setMemory(memory.get)
     if (memoryReservation.isPresent) cd.setMemoryReservation(memoryReservation.get)
     if (mountPoints.nonEmpty) cd.setMountPoints(mountPoints.asJava)
@@ -228,8 +228,8 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     Optional.of(tmpfs)
   }
 
-  protected def configureLogConfiguration(c: Config): Optional[LogConfiguration] = {
-    if (c.isEmpty) return Optional.absent()
+  protected def configureLogConfiguration(c: Config): Option[LogConfiguration] = {
+    if (c.isEmpty) return None
 
     val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
     val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
@@ -238,7 +238,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     lc.setLogDriver(logDriver)
     if (options.nonEmpty) lc.setOptions(options.asJava)
 
-    Optional.of(lc)
+    Some(lc)
   }
 
   protected def configureMountPoint(c: Config): Optional[MountPoint] = {
