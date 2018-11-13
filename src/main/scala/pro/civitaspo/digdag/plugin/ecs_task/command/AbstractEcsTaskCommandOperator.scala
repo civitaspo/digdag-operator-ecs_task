@@ -8,9 +8,12 @@ import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.collection.JavaConverters._
 import scala.util.Random
+import scala.util.matching.Regex
 
 abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+
+  protected val validEnvKeyRegex: Regex = "[a-zA-Z_][a-zA-Z_0-9]*".r
 
   protected val mainScriptName: String
 
@@ -53,7 +56,20 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
   protected def collectEnvironments(): Map[String, String] = {
     val vars: PrivilegedVariables = context.getPrivilegedVariables
     vars.getKeys.asScala.foldLeft(Map.empty[String, String]) { (env, key) =>
-      env ++ Map(key -> vars.get(key))
+    if (isValidEnvKey(key)) {
+        env ++ Map(key -> vars.get(key))
+      }
+      else {
+        logger.info(s"$key is invalid env key.")
+        env
+      }
+    }
+  }
+
+  protected def isValidEnvKey(key: String): Boolean = {
+    key match {
+      case validEnvKeyRegex() => true
+      case _ => false
     }
   }
 

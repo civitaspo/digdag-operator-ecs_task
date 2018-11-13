@@ -16,6 +16,9 @@ cd workspace
 # Unset e option for returning embulk results to digdag
 set +e
 
+# envs
+export ${ECS_TASK_SH_EXPORT_ENV}
+
 # Run
 ${ECS_TASK_SH_COMMAND} \
         2>> ../stderr.log \
