@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'pro.civitaspo'
-version = '0.0.5'
+version = '0.0.6'
 
 def digdagVersion = '0.9.31'
 def scalaSemanticVersion = "2.12.6"
@@ -37,6 +37,7 @@ shadowJar {
     classifier = null
     dependencies {
         exclude(dependency('io.digdag:.*'))
+        exclude(dependency('.*:jackson.*:.*'))
     }
 }
 
