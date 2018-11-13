@@ -1,0 +1,19 @@
+
++ecs_task.rb:
+  +step0:
+    ecs_task.rb>: echo
+    require: echo
+    gem_install: [awesome_print]
+    image: civitaspo/ruby-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.rb'
+        created_by: civitaspo
+    tmp_storage:
+      type: s3
+      uri: ${output}
+    family: hello_ecs_task_rb
+    cluster: ${cluster}
+    network_mode: host
+    memory: 1 GB
+
