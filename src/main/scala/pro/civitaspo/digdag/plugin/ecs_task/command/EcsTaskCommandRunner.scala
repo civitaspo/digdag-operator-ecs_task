@@ -8,6 +8,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.VERSION
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 
 case class EcsTaskCommandRunner(
   tmpStorage: TmpStorage,
@@ -30,7 +31,7 @@ case class EcsTaskCommandRunner(
   val taskName: String = params.get("task_name", classOf[String])
   val familyPrefix: String = params.get("family_prefix", classOf[String], "")
   val familySuffix: String = params.get("family_suffix", classOf[String], "")
-  val familyInfix: String = params.get("family_infix", classOf[String], taskName.replaceAll("\\+", "_").replaceAll("\\^", "_").replaceAll("\\=", "_"))
+  val familyInfix: String = params.get("family_infix", classOf[String], taskName)
   val family: String = params.get("family", classOf[String], s"$familyPrefix$familyInfix$familySuffix")
   val memory: Optional[String] = params.getOptional("memory", classOf[String])
   val networkMode: Optional[String] = params.getOptional("network_mode", classOf[String])
@@ -69,7 +70,7 @@ case class EcsTaskCommandRunner(
   // NOTE: If you set it by container level, use the `overrides` option.
   // val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
   val mountPoints: Seq[Config] = params.parseListOrGetEmpty("mount_points", classOf[Config]).asScala
-  val containerName: String = params.get("container_name", classOf[String], family)
+  val containerName: Optional[String]= params.getOptional("container_name", classOf[String])
   val portMappings: Seq[Config] = params.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala
   val privileged: Optional[Boolean] = params.getOptional("privileged", classOf[Boolean])
   val pseudoTerminal: Optional[Boolean] = params.getOptional("pseudo_terminal", classOf[Boolean])
@@ -97,6 +98,8 @@ case class EcsTaskCommandRunner(
 
   // For ecs_task.wait operator
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
+
+  lazy val normalizedFamily: String = normalizeFamily(family)
 
   def run(): TaskResult = {
     val subTasks: Config = cf.create()
@@ -171,7 +174,7 @@ case class EcsTaskCommandRunner(
     c.set("container_definitions", (Seq(containerDefinitionConfig()) ++ sidecars).asJava)
     c.setOptional("cpu", cpu)
     c.setOptional("execution_role_arn", executionRoleArn)
-    c.set("family", family)
+    c.set("family", normalizedFamily)
     c.setOptional("memory", memory)
     c.setOptional("network_mode", networkMode)
     c.set("requires_compatibilities", requiresCompatibilities.asJava)
@@ -203,7 +206,7 @@ case class EcsTaskCommandRunner(
     c.setOptional("linux_parameters", linuxParameters)
     c.setOptional("log_configuration", logConfiguration)
     c.set("mount_points", mountPoints.asJava)
-    c.set("name", containerName)
+    c.set("name", containerName.or(normalizedFamily))
     c.set("port_mappings", portMappings.asJava)
     c.setOptional("privileged", privileged)
     c.setOptional("pseudo_terminal", pseudoTerminal)
@@ -216,6 +219,14 @@ case class EcsTaskCommandRunner(
     c.setOptional("working_directory", workingDirectory)
 
     c
+  }
+
+  protected def normalizeFamily(family: String): String = {
+    // ref. https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html#ECS-RegisterTaskDefinition-request-family
+    val validLetterRegex: Regex = "[a-zA-Z0-9_-]".r
+    val after: String = family.map{ case l @ validLetterRegex() => l; case _ => "_" }.mkString
+    if (!family.contentEquals(after)) logger.warn(s"Normalized family: $family -> $after")
+    after
   }
 
 }
