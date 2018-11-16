@@ -16,9 +16,12 @@ _export:
     memory: 1 GB
     task_role_arn: ${task_role_arn}
 
-
 +ecs_task.sh:
   call>: ecs_task.sh/example
 
 +ecs_task.rb:
   call>: ecs_task.rb/example
+
++ecs_task.embulk:
+  call>: ecs_task.embulk/example
+

@@ -9,11 +9,4 @@
       message:
         message: 'hello ecs_task.rb'
         created_by: civitaspo
-    tmp_storage:
-      type: s3
-      uri: ${output}
-    family: hello_ecs_task_rb
-    cluster: ${cluster}
-    network_mode: host
-    memory: 1 GB
 
