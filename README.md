@@ -114,8 +114,6 @@ _export:
       in:
         type: file
         path_prefix: ${path_prefix}
-        decoders:
-          - {type: gzip}
         parser:
           charset: UTF-8
           newline: CRLF
