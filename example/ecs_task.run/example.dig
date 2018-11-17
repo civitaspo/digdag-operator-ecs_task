@@ -1,0 +1,49 @@
+
++ecs_task.run:
+  +step1:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step1
+          image: civitaspo/python-awscli:latest
+          command: [echo, step1]
+          essential: true
+          memory: 500
+          cpu: 1
+      family: step1
+    count: 1
+  +step2:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step2
+          image: civitaspo/python-awscli:latest
+          command: [echo, step2]
+          essential: true
+          memory: 500
+          cpu: 1
+      family: step2
+    count: 1
+  +step3:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step3
+          image: civitaspo/python-awscli:latest
+          command:
+            - sh
+            - -c
+            - echo '{"store_params":{"civi":"taspo"}}' | aws s3 cp - ${output}/${session_uuid}.json
+          essential: true
+          memory: 500
+          cpu: 1
+      task_role_arn: ${task_role_arn}
+      family: step3
+    count: 1
+    result_s3_uri: ${output}/${session_uuid}.json
+
+  +step4:
+    echo>: ${civi}

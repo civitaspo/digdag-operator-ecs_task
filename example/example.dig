@@ -28,3 +28,5 @@ _export:
 +ecs_task.embulk:
   call>: ecs_task.embulk/example
 
++ecs_task.run:
+  call>: ecs_task.run/example
