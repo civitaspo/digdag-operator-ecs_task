@@ -18,30 +18,127 @@ _export:
       - pro.civitaspo:digdag-operator-ecs_task:0.0.6
   ecs_task:
     auth_method: profile
+    tmp_storage:
+      type: s3
+      uri: ${output}
+    family_prefix: hello-
+    cluster: ${cluster}
+    network_mode: host
+    memory: 1 GB
+    task_role_arn: ${task_role_arn}
 
-+step0:
-  sh>: echo '{"store_params":{"civi":"taspo"}}' | aws s3 cp - ${output}
++ecs_task.run:
+  +step1:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step1
+          image: civitaspo/python-awscli:latest
+          command: [echo, step1]
+          essential: true
+          memory: 500
+          cpu: 1
+      family: step1
+    count: 1
+  +step2:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step2
+          image: civitaspo/python-awscli:latest
+          command: [echo, step2]
+          essential: true
+          memory: 500
+          cpu: 1
+      family: step2
+    count: 1
+  +step3:
+    ecs_task.run>:
+    def:
+      network_mode: host
+      container_definitions:
+        - name: step3
+          image: civitaspo/python-awscli:latest
+          command:
+            - sh
+            - -c
+            - echo '{"store_params":{"civi":"taspo"}}' | aws s3 cp - ${output}/${session_uuid}.json
+          essential: true
+          memory: 500
+          cpu: 1
+      task_role_arn: ${task_role_arn}
+      family: step3
+    count: 1
+    result_s3_uri: ${output}/${session_uuid}.json
 
-+step1:
-  ecs_task.run>:
-  def:
-    network_mode: Host
-    container_definitions:
-      - name: uploader
-        image: amazonlinux:2
-        command: [yum, install, '-y', awscli]
-        essential: true
-        memory: 500
-        cpu: 10
-    family: hello_world
-  cluster: ${cluster}
-  count: 1
-  result_s3_uri: ${output}
+  +step4:
+    echo>: ${civi}
 
-+step2:
-  echo>: ${civi}
++ecs_task.sh:
+  +step0:
+    ecs_task.sh>: env
+    image: civitaspo/digdag-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.rb'
+        created_by: civitaspo
+
++ecs_task.rb:
+  +step0:
+    ecs_task.rb>: echo
+    require: echo
+    gem_install: [awesome_print]
+    image: civitaspo/ruby-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.rb'
+        created_by: civitaspo
+
++ecs_task.py:
+  +step0:
+    ecs_task.py>: echo.echo
+    pip_install: [PyYaml]
+    image: civitaspo/python-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.py'
+        created_by: civitaspo
+
++ecs_task.embulk:
+  _export:
+    path_prefix: ./csv/
+  +dig:
+    ecs_task.embulk>:
+      in:
+        type: file
+        path_prefix: ${path_prefix}
+        decoders:
+          - {type: gzip}
+        parser:
+          charset: UTF-8
+          newline: CRLF
+          type: csv
+          delimiter: ','
+          quote: '"'
+          escape: '"'
+          null_string: 'NULL'
+          skip_header_lines: 0
+          columns:
+            - {name: id, type: long}
+            - {name: comment, type: string}
+      out:
+        type: stdout
+    image: civitaspo/embulk-awscli:latest
+
+  +file:
+    ecs_task.embulk>: template.yml
+    image: civitaspo/embulk-awscli:latest
 
 ```
+
+See [example](./example).
 
 # Configuration
 
@@ -241,7 +338,7 @@ aws configure
 ### 3) run an example
 
 ```sh
-./example/run.sh
+./example/run.sh ${ECS Cluster Name} ${S3 URI Prefix for tmp storage} ${ECS Task Role ARN}
 ```
 
 ## (TODO) Run Tests
