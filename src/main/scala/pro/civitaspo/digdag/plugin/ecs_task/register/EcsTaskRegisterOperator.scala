@@ -17,6 +17,7 @@ import com.amazonaws.services.ecs.model.{
   RepositoryCredentials,
   Secret,
   SystemControl,
+  Tag,
   TaskDefinitionPlacementConstraint,
   Tmpfs,
   Ulimit,
@@ -52,6 +53,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
     val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
+    val tags: Seq[Tag] = c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map(t => new Tag().withKey(t._1).withValue(t._2)).toSeq
     val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
     val volumes: Seq[Volume] = c.parseListOrGetEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
 
@@ -65,6 +67,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (pidMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support pid_mode.")
     if (placementConstraints.nonEmpty) req.setPlacementConstraints(placementConstraints.asJava)
     if (requiresCompatibilities.nonEmpty) req.setRequiresCompatibilities(requiresCompatibilities.asJava)
+    if (tags.nonEmpty) req.setTags(tags.asJava)
     if (taskRoleArn.isPresent) req.setTaskRoleArn(taskRoleArn.get)
     if (volumes.nonEmpty) req.setVolumes(volumes.asJava)
 
