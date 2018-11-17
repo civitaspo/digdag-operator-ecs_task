@@ -15,6 +15,7 @@ import com.amazonaws.services.ecs.model.{
   RegisterTaskDefinitionRequest,
   RegisterTaskDefinitionResult,
   RepositoryCredentials,
+  Secret,
   SystemControl,
   TaskDefinitionPlacementConstraint,
   Tmpfs,
@@ -104,6 +105,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val pseudoTerminal: Optional[Boolean] = c.getOptional("pseudo_terminal", classOf[Boolean])
     val readonlyRootFilesystem: Optional[Boolean] = c.getOptional("readonly_root_filesystem", classOf[Boolean])
     val repositoryCredentials: Optional[RepositoryCredentials] = configureRepositoryCredentials(c.parseNestedOrGetEmpty("repository_credentials"))
+    val secrets: Seq[Secret] = c.parseListOrGetEmpty("secrets", classOf[Config]).asScala.map(configureSecrets).map(_.get)
     val systemControls: Seq[SystemControl] = c.parseListOrGetEmpty("system_controls", classOf[Config]).asScala.map(configureSystemControl).map(_.get)
     val ulimits: Seq[Ulimit] = c.parseListOrGetEmpty("ulimits", classOf[Config]).asScala.map(configureUlimit).map(_.get)
     val user: Optional[String] = c.getOptional("user", classOf[String])
@@ -138,6 +140,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (pseudoTerminal.isPresent) cd.setPseudoTerminal(pseudoTerminal.get)
     if (readonlyRootFilesystem.isPresent) cd.setReadonlyRootFilesystem(readonlyRootFilesystem.get)
     if (repositoryCredentials.isPresent) cd.setRepositoryCredentials(repositoryCredentials.get)
+    if (secrets.nonEmpty) cd.setSecrets(secrets.asJava)
     if (systemControls.nonEmpty) cd.setSystemControls(systemControls.asJava)
     if (ulimits.nonEmpty) cd.setUlimits(ulimits.asJava)
     if (user.isPresent) cd.setUser(user.get)
@@ -280,6 +283,19 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     rc.setCredentialsParameter(credentialsParameter)
 
     Optional.of(rc)
+  }
+
+  protected def configureSecrets(c: Config): Optional[Secret] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val name: String = c.get("name", classOf[String])
+    val valueFrom: String = c.get("value_from", classOf[String])
+
+    val s: Secret = new Secret()
+    s.setName(name)
+    s.setValueFrom(valueFrom)
+
+    Optional.of(s)
   }
 
   protected def configureSystemControl(c: Config): Optional[SystemControl] = {
