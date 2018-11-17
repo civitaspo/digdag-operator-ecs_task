@@ -44,8 +44,10 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
     val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
     val family: String = c.get("family", classOf[String])
+    val ipcMode: Optional[String] = c.getOptional("ipc_mode", classOf[String])
     val memory: Optional[String] = c.getOptional("memory", classOf[String])
     val networkMode: Optional[String] = c.getOptional("network_mode", classOf[String])
+    val pidMode: Optional[String] = c.getOptional("pid_mode", classOf[String])
 
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
@@ -57,8 +59,10 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (cpu.isPresent) req.setCpu(cpu.get)
     if (executionRoleArn.isPresent) req.setExecutionRoleArn(executionRoleArn.get)
     req.setFamily(family)
+    if (ipcMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode.")
     if (memory.isPresent) req.setMemory(memory.get)
     if (networkMode.isPresent) req.setNetworkMode(networkMode.get)
+    if (pidMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support pid_mode.")
     if (placementConstraints.nonEmpty) req.setPlacementConstraints(placementConstraints.asJava)
     if (requiresCompatibilities.nonEmpty) req.setRequiresCompatibilities(requiresCompatibilities.asJava)
     if (taskRoleArn.isPresent) req.setTaskRoleArn(taskRoleArn.get)
