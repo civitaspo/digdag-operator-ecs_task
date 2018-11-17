@@ -29,7 +29,7 @@ dependencies {
 
     ['ecs', 's3', 'sts'].each { svc ->
         // https://mvnrepository.com/artifact/com.amazonaws/
-        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.433'
+        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.451'
     }
 }
 
