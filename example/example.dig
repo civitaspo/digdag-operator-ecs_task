@@ -22,6 +22,9 @@ _export:
 +ecs_task.rb:
   call>: ecs_task.rb/example
 
++ecs_task.py:
+  call>: ecs_task.py/example
+
 +ecs_task.embulk:
   call>: ecs_task.embulk/example
 
