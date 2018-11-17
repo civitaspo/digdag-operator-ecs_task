@@ -266,6 +266,8 @@ In addition, the below configurations exist.
 - **pseudo_terminal**: When this parameter is `true`, a TTY is allocated. (boolean, optional)
 - **readonly_root_filesystem**: When this parameter is `true`, the container is given read-only access to its root file system. (boolean, optional)
 - **repository_credentials**: The private repository authentication credentials to use. The configuration map is the same as the snake-cased [API_RepositoryCredentials](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RepositoryCredentials.html). (map, optional)
+- **secrets**: The secrets to pass to the container. (array of map, optional)
+    - The configuration map is the same as the snake-cased [API_Secret](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Secret.html).
 - **system_controls**: A list of namespaced kernel parameters to set in the container. For more information, see [ECS-Type-ContainerDefinition-systemControls](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-systemControls). (array of map, optional)
     - The configuration map is the same as the snake-cased [API_SystemControl](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_SystemControl.html).
 - **ulimits**: A list of ulimits to set in the container. (array of map, optional)
@@ -286,6 +288,8 @@ In addition, the below configurations exist.
     - The configuration map is the same as the snake-cased [API_PlacementStrategy](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PlacementStrategy.html).
 - **platform_version**: The platform version on which to run your task. If one is not specified, the latest version is used by default. (string, optional)
 - **started_by**: An optional tag specified when a task is started. (string, optional)
+- **tags**: The metadata that you apply to the task to help you categorize and organize them. Each tag consists of a key and an optional value, both of which you define. Tag keys can have a maximum character length of 128 characters, and tag values can have a maximum length of 256 characters. (string to string map, optional)
+    - For using this option, require [migrating Amazon ECS deployment to the new ARN and resource ID format](Migrating your Amazon ECS deployment to the new ARN and resource ID format).
 - **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
     - Currently, input params, output params, stdout, stderr, and internal scripts are put on S3, and then they are not removed. So it's insecure unless strict access control to S3.
     - This option is **deprecated**. Please use **tmp_storage** option instead.

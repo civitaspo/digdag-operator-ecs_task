@@ -14,6 +14,11 @@ _export:
     cluster: ${cluster}
     network_mode: host
     memory: 1 GB
+    # NOTE: For using this option, require the ECS Cluster migration. See ttps://aws.amazon.com/jp/blogs/compute/migrating-your-amazon-ecs-deployment-to-the-new-arn-and-resource-id-format-2/
+    # tags:
+    #   environment: development
+    #   created_by: digdag-operator-ecs_task
+    #   digdag.session_uuid: ${session_uuid}
     task_role_arn: ${task_role_arn}
 
 +ecs_task.sh:
