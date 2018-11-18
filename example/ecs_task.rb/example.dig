@@ -1,0 +1,12 @@
+
++ecs_task.rb:
+  +step0:
+    ecs_task.rb>: echo
+    require: echo
+    gem_install: [awesome_print]
+    image: civitaspo/ruby-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.rb'
+        created_by: civitaspo
+

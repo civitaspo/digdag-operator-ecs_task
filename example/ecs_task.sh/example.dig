@@ -1,0 +1,10 @@
+
++ecs_task.sh:
+  +step0:
+    ecs_task.sh>: env
+    image: civitaspo/digdag-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.rb'
+        created_by: civitaspo
+

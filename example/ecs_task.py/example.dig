@@ -1,0 +1,11 @@
+
++ecs_task.py:
+  +step0:
+    ecs_task.py>: echo.echo
+    pip_install: [PyYaml]
+    image: civitaspo/python-awscli:latest
+    _export:
+      message:
+        message: 'hello ecs_task.py'
+        created_by: civitaspo
+

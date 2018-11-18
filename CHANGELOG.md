@@ -1,3 +1,11 @@
+0.0.7 (2018-11-19)
+==================
+
+* [Enhancement] Add examples for scripting operators and update `ecs_task.run>` example.
+* [Enhancement] Always normalize ECS Task family name.
+* [Enhancement] Update aws-java-sdk 1.11.433 -> 1.11.451
+* [Enhancement] Add new options (`secrets`, `tags`) that follow ECS new release. `ipc_mode` and `pid_mode` are not supported yet because aws-java-sdk does not supports them.
+
 0.0.6 (2018-11-13)
 ==================
 

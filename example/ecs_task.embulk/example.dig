@@ -1,0 +1,29 @@
+
++ecs_task.embulk:
+  _export:
+    path_prefix: ./csv/
+  +dig:
+    ecs_task.embulk>:
+      in:
+        type: file
+        path_prefix: ${path_prefix}
+        parser:
+          charset: UTF-8
+          newline: CRLF
+          type: csv
+          delimiter: ','
+          quote: '"'
+          escape: '"'
+          null_string: 'NULL'
+          skip_header_lines: 0
+          columns:
+            - {name: id, type: long}
+            - {name: comment, type: string}
+      out:
+        type: stdout
+    image: civitaspo/embulk-awscli:latest
+
+  +file:
+    ecs_task.embulk>: template.yml
+    image: civitaspo/embulk-awscli:latest
+
