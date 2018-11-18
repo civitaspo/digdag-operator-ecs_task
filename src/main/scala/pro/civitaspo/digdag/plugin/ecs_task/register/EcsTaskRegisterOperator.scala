@@ -15,7 +15,9 @@ import com.amazonaws.services.ecs.model.{
   RegisterTaskDefinitionRequest,
   RegisterTaskDefinitionResult,
   RepositoryCredentials,
+  Secret,
   SystemControl,
+  Tag,
   TaskDefinitionPlacementConstraint,
   Tmpfs,
   Ulimit,
@@ -43,12 +45,15 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
     val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
     val family: String = c.get("family", classOf[String])
+    val ipcMode: Optional[String] = c.getOptional("ipc_mode", classOf[String])
     val memory: Optional[String] = c.getOptional("memory", classOf[String])
     val networkMode: Optional[String] = c.getOptional("network_mode", classOf[String])
+    val pidMode: Optional[String] = c.getOptional("pid_mode", classOf[String])
 
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
     val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
+    val tags: Seq[Tag] = c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map(t => new Tag().withKey(t._1).withValue(t._2)).toSeq
     val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
     val volumes: Seq[Volume] = c.parseListOrGetEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
 
@@ -56,10 +61,13 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (cpu.isPresent) req.setCpu(cpu.get)
     if (executionRoleArn.isPresent) req.setExecutionRoleArn(executionRoleArn.get)
     req.setFamily(family)
+    if (ipcMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode.")
     if (memory.isPresent) req.setMemory(memory.get)
     if (networkMode.isPresent) req.setNetworkMode(networkMode.get)
+    if (pidMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support pid_mode.")
     if (placementConstraints.nonEmpty) req.setPlacementConstraints(placementConstraints.asJava)
     if (requiresCompatibilities.nonEmpty) req.setRequiresCompatibilities(requiresCompatibilities.asJava)
+    if (tags.nonEmpty) req.setTags(tags.asJava)
     if (taskRoleArn.isPresent) req.setTaskRoleArn(taskRoleArn.get)
     if (volumes.nonEmpty) req.setVolumes(volumes.asJava)
 
@@ -104,6 +112,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val pseudoTerminal: Optional[Boolean] = c.getOptional("pseudo_terminal", classOf[Boolean])
     val readonlyRootFilesystem: Optional[Boolean] = c.getOptional("readonly_root_filesystem", classOf[Boolean])
     val repositoryCredentials: Optional[RepositoryCredentials] = configureRepositoryCredentials(c.parseNestedOrGetEmpty("repository_credentials"))
+    val secrets: Seq[Secret] = c.parseListOrGetEmpty("secrets", classOf[Config]).asScala.map(configureSecrets).map(_.get)
     val systemControls: Seq[SystemControl] = c.parseListOrGetEmpty("system_controls", classOf[Config]).asScala.map(configureSystemControl).map(_.get)
     val ulimits: Seq[Ulimit] = c.parseListOrGetEmpty("ulimits", classOf[Config]).asScala.map(configureUlimit).map(_.get)
     val user: Optional[String] = c.getOptional("user", classOf[String])
@@ -138,6 +147,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (pseudoTerminal.isPresent) cd.setPseudoTerminal(pseudoTerminal.get)
     if (readonlyRootFilesystem.isPresent) cd.setReadonlyRootFilesystem(readonlyRootFilesystem.get)
     if (repositoryCredentials.isPresent) cd.setRepositoryCredentials(repositoryCredentials.get)
+    if (secrets.nonEmpty) cd.setSecrets(secrets.asJava)
     if (systemControls.nonEmpty) cd.setSystemControls(systemControls.asJava)
     if (ulimits.nonEmpty) cd.setUlimits(ulimits.asJava)
     if (user.isPresent) cd.setUser(user.get)
@@ -280,6 +290,19 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     rc.setCredentialsParameter(credentialsParameter)
 
     Optional.of(rc)
+  }
+
+  protected def configureSecrets(c: Config): Optional[Secret] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val name: String = c.get("name", classOf[String])
+    val valueFrom: String = c.get("value_from", classOf[String])
+
+    val s: Secret = new Secret()
+    s.setName(name)
+    s.setValueFrom(valueFrom)
+
+    Optional.of(s)
   }
 
   protected def configureSystemControl(c: Config): Optional[SystemControl] = {
