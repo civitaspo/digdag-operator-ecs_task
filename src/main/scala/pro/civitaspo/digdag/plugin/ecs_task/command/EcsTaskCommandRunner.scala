@@ -74,7 +74,7 @@ case class EcsTaskCommandRunner(
   // NOTE: If you set it by container level, use the `overrides` option.
   // val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
   val mountPoints: Seq[Config] = params.parseListOrGetEmpty("mount_points", classOf[Config]).asScala
-  val containerName: Optional[String]= params.getOptional("container_name", classOf[String])
+  val containerName: Optional[String] = params.getOptional("container_name", classOf[String])
   val portMappings: Seq[Config] = params.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala
   val privileged: Optional[Boolean] = params.getOptional("privileged", classOf[Boolean])
   val pseudoTerminal: Optional[Boolean] = params.getOptional("pseudo_terminal", classOf[Boolean])
@@ -235,7 +235,7 @@ case class EcsTaskCommandRunner(
   protected def normalizeFamily(family: String): String = {
     // ref. https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html#ECS-RegisterTaskDefinition-request-family
     val validLetterRegex: Regex = "[a-zA-Z0-9_-]".r
-    val after: String = family.map{ case l @ validLetterRegex() => l; case _ => "_" }.mkString
+    val after: String = family.map { case l @ validLetterRegex() => l; case _ => "_" }.mkString
     if (!family.contentEquals(after)) logger.warn(s"Normalized family: $family -> $after")
     after
   }

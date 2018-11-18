@@ -56,7 +56,7 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
   protected def collectEnvironments(): Map[String, String] = {
     val vars: PrivilegedVariables = context.getPrivilegedVariables
     vars.getKeys.asScala.foldLeft(Map.empty[String, String]) { (env, key) =>
-    if (isValidEnvKey(key)) {
+      if (isValidEnvKey(key)) {
         env ++ Map(key -> vars.get(key))
       }
       else {
