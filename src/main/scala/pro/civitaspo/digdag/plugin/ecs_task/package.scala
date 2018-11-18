@@ -2,6 +2,6 @@ package pro.civitaspo.digdag.plugin
 
 package object ecs_task {
 
-  val VERSION: String = "0.0.6"
+  val VERSION: String = "0.0.7"
 
 }
