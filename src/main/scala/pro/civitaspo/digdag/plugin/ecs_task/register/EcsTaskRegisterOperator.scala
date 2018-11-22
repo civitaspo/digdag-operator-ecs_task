@@ -1,409 +1,222 @@
 package pro.civitaspo.digdag.plugin.ecs_task.register
-import com.amazonaws.services.ecs.model.{
-  ContainerDefinition,
-  Device,
-  DockerVolumeConfiguration,
-  HealthCheck,
-  HostEntry,
-  HostVolumeProperties,
-  KernelCapabilities,
-  KeyValuePair,
-  LinuxParameters,
-  LogConfiguration,
-  MountPoint,
-  PortMapping,
-  RegisterTaskDefinitionRequest,
-  RegisterTaskDefinitionResult,
-  RepositoryCredentials,
-  Secret,
-  SystemControl,
-  Tag,
-  TaskDefinitionPlacementConstraint,
-  Tmpfs,
-  Ulimit,
-  Volume,
-  VolumeFrom
-}
-import com.google.common.base.Optional
+import com.amazonaws.services.ecs.model._
 import com.google.common.collect.ImmutableList
 import io.digdag.client.config.{Config, ConfigKey}
 import io.digdag.spi.{ImmutableTaskResult, OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
+import pro.civitaspo.digdag.plugin.ecs_task.util.DigdagConfig
 
 import scala.collection.JavaConverters._
 
 class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
-  protected val config: Config = params.getNested("_command")
+  protected val config: DigdagConfig = DigdagConfig(params).getNested("_command")
 
-  protected def buildRegisterTaskDefinitionRequest(c: Config): RegisterTaskDefinitionRequest = {
+  protected def buildRegisterTaskDefinitionRequest(c: DigdagConfig): RegisterTaskDefinitionRequest = {
     val req: RegisterTaskDefinitionRequest = new RegisterTaskDefinitionRequest()
 
-    val containerDefinitions: Seq[ContainerDefinition] =
-      c.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
-    val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
-    val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
-    val family: String = c.get("family", classOf[String])
-    val ipcMode: Optional[String] = c.getOptional("ipc_mode", classOf[String])
-    val memory: Optional[String] = c.getOptional("memory", classOf[String])
-    val networkMode: Optional[String] = c.getOptional("network_mode", classOf[String])
-    val pidMode: Optional[String] = c.getOptional("pid_mode", classOf[String])
+    req.setFamily(c.get("family"))
 
-    val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
-      c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
-    val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
-    val tags: Seq[Tag] = c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map(t => new Tag().withKey(t._1).withValue(t._2)).toSeq
-    val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
-    val volumes: Seq[Volume] = c.parseListOrGetEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get)
-
-    req.setContainerDefinitions(containerDefinitions.asJava)
-    if (cpu.isPresent) req.setCpu(cpu.get)
-    if (executionRoleArn.isPresent) req.setExecutionRoleArn(executionRoleArn.get)
-    req.setFamily(family)
-    if (ipcMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode.")
-    if (memory.isPresent) req.setMemory(memory.get)
-    if (networkMode.isPresent) req.setNetworkMode(networkMode.get)
-    if (pidMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support pid_mode.")
-    if (placementConstraints.nonEmpty) req.setPlacementConstraints(placementConstraints.asJava)
-    if (requiresCompatibilities.nonEmpty) req.setRequiresCompatibilities(requiresCompatibilities.asJava)
-    if (tags.nonEmpty) req.setTags(tags.asJava)
-    if (taskRoleArn.isPresent) req.setTaskRoleArn(taskRoleArn.get)
-    if (volumes.nonEmpty) req.setVolumes(volumes.asJava)
+    c.parseNestedOptSeq("container_definitions").map(_.map(configureContainerDefinition).asJava).foreach(req.setContainerDefinitions)
+    c.getOpt("cpu").foreach(req.setCpu)
+    c.getOpt("execution_role_arn").foreach(req.setExecutionRoleArn)
+    c.getOpt("ipc_mode").foreach(throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode."))
+    c.getOpt("memory").foreach(req.setMemory)
+    c.getOpt[String]("network_mode").foreach(req.setNetworkMode)
+    c.getOpt("pid_mode").foreach(throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode."))
+    c.getOpt("task_role_arn").foreach(req.setTaskRoleArn)
+    c.parseNestedOptSeq("placement_constraints")
+      .map(_.map(configureTaskDefinitionPlacementConstraint).asJava)
+      .foreach(req.setPlacementConstraints)
+    c.parseSeqOpt[String]("requires_compatibilities")
+      .map(_.asJava)
+      .foreach(req.setRequiresCompatibilities)
+    c.getMapOpt[String, String]("tags")
+      .map(_.map(tagMap => new Tag().withKey(tagMap._1).withValue(tagMap._2)).toSeq.asJava)
+      .foreach(req.setTags)
+    c.parseNestedOptSeq("volumes")
+      .map(_.map(configureVolume).asJava)
+      .foreach(req.setVolumes)
 
     req
   }
 
-  protected def configureContainerDefinition(c: Config): Optional[ContainerDefinition] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val command: Seq[String] = c.parseListOrGetEmpty("command", classOf[String]).asScala
-    val cpu: Optional[Int] = c.getOptional("cpu", classOf[Int])
-    val disableNetworking: Optional[Boolean] = c.getOptional("disable_networking", classOf[Boolean])
-    val dnsSearchDomains: Seq[String] = c.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala
-    val dnsServers: Seq[String] = c.parseListOrGetEmpty("dns_servers", classOf[String]).asScala
-    val dockerLabels: Map[String, String] = c.getMapOrEmpty("docker_labels", classOf[String], classOf[String]).asScala.toMap
-    val dockerSecurityOptions: Seq[String] = c.parseListOrGetEmpty("docker_security_options", classOf[String]).asScala
-    val entryPoint: Seq[String] = c.parseListOrGetEmpty("entry_point", classOf[String]).asScala
-    val environments: Seq[KeyValuePair] = c
-      .getMapOrEmpty("environments", classOf[String], classOf[String])
-      .asScala
-      .map { case (k: String, v: String) => new KeyValuePair().withName(k).withValue(v) }
-      .toSeq // TODO: doc
-    val essential: Optional[Boolean] = c.getOptional("essential", classOf[Boolean])
-    val extraHosts: Seq[HostEntry] = c
-      .getMapOrEmpty("extra_hosts", classOf[String], classOf[String])
-      .asScala
-      .map { case (host: String, ip: String) => new HostEntry().withHostname(host).withIpAddress(ip) }
-      .toSeq // TODO: doc
-    val healthCheck: Optional[HealthCheck] = configureHealthCheck(c.parseNestedOrGetEmpty("health_check"))
-    val hostname: Optional[String] = c.getOptional("hostname", classOf[String])
-    val image: Optional[String] = c.getOptional("image", classOf[String])
-    val interactive: Optional[Boolean] = c.getOptional("interactive", classOf[Boolean])
-    val links: Seq[String] = c.parseListOrGetEmpty("links", classOf[String]).asScala
-    val linuxParameters: Optional[LinuxParameters] = configureLinuxParameters(c.parseNestedOrGetEmpty("linux_parameters"))
-    val logConfiguration: Optional[LogConfiguration] = configureLogConfiguration(c.parseNestedOrGetEmpty("log_configuration"))
-    val memory: Optional[Int] = c.getOptional("memory", classOf[Int])
-    val memoryReservation: Optional[Int] = c.getOptional("memory_reservation", classOf[Int])
-    val mountPoints: Seq[MountPoint] = c.parseListOrGetEmpty("mount_points", classOf[Config]).asScala.map(configureMountPoint).map(_.get)
-    val name: Optional[String] = c.getOptional("name", classOf[String])
-    val portMappings: Seq[PortMapping] = c.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala.map(configurePortMapping).map(_.get)
-    val privileged: Optional[Boolean] = c.getOptional("privileged", classOf[Boolean])
-    val pseudoTerminal: Optional[Boolean] = c.getOptional("pseudo_terminal", classOf[Boolean])
-    val readonlyRootFilesystem: Optional[Boolean] = c.getOptional("readonly_root_filesystem", classOf[Boolean])
-    val repositoryCredentials: Optional[RepositoryCredentials] = configureRepositoryCredentials(c.parseNestedOrGetEmpty("repository_credentials"))
-    val secrets: Seq[Secret] = c.parseListOrGetEmpty("secrets", classOf[Config]).asScala.map(configureSecrets).map(_.get)
-    val systemControls: Seq[SystemControl] = c.parseListOrGetEmpty("system_controls", classOf[Config]).asScala.map(configureSystemControl).map(_.get)
-    val ulimits: Seq[Ulimit] = c.parseListOrGetEmpty("ulimits", classOf[Config]).asScala.map(configureUlimit).map(_.get)
-    val user: Optional[String] = c.getOptional("user", classOf[String])
-    val volumesFrom: Seq[VolumeFrom] = c.parseListOrGetEmpty("volumes_from", classOf[Config]).asScala.map(configureVolumeFrom).map(_.get)
-    val workingDirectory: Optional[String] = c.getOptional("working_directory", classOf[String])
+  protected def configureContainerDefinition(c: DigdagConfig): ContainerDefinition = {
 
     val cd: ContainerDefinition = new ContainerDefinition()
-    cd.setCommand(command.asJava)
-    if (cpu.isPresent) cd.setCpu(cpu.get)
-    if (disableNetworking.isPresent) cd.setDisableNetworking(disableNetworking.get)
-    if (dnsSearchDomains.nonEmpty) cd.setDnsSearchDomains(dnsSearchDomains.asJava)
-    if (dnsServers.nonEmpty) cd.setDnsServers(dnsServers.asJava)
-    if (dockerLabels.nonEmpty) cd.setDockerLabels(dockerLabels.asJava)
-    if (dockerSecurityOptions.nonEmpty) cd.setDockerSecurityOptions(dockerSecurityOptions.asJava)
-    if (entryPoint.nonEmpty) cd.setEntryPoint(entryPoint.asJava)
-    if (environments.nonEmpty) cd.setEnvironment(environments.asJava) // TODO: merge params?
-    if (essential.isPresent) cd.setEssential(essential.get)
-    if (extraHosts.nonEmpty) cd.setExtraHosts(extraHosts.asJava)
-    if (healthCheck.isPresent) cd.setHealthCheck(healthCheck.get)
-    if (hostname.isPresent) cd.setHostname(hostname.get)
-    if (image.isPresent) cd.setImage(image.get)
-    if (interactive.isPresent) cd.setInteractive(interactive.get)
-    if (links.nonEmpty) cd.setLinks(links.asJava)
-    if (linuxParameters.isPresent) cd.setLinuxParameters(linuxParameters.get)
-    if (logConfiguration.isPresent) cd.setLogConfiguration(logConfiguration.get)
-    if (memory.isPresent) cd.setMemory(memory.get)
-    if (memoryReservation.isPresent) cd.setMemoryReservation(memoryReservation.get)
-    if (mountPoints.nonEmpty) cd.setMountPoints(mountPoints.asJava)
-    if (name.isPresent) cd.setName(name.get)
-    if (portMappings.nonEmpty) cd.setPortMappings(portMappings.asJava)
-    if (privileged.isPresent) cd.setPrivileged(privileged.get)
-    if (pseudoTerminal.isPresent) cd.setPseudoTerminal(pseudoTerminal.get)
-    if (readonlyRootFilesystem.isPresent) cd.setReadonlyRootFilesystem(readonlyRootFilesystem.get)
-    if (repositoryCredentials.isPresent) cd.setRepositoryCredentials(repositoryCredentials.get)
-    if (secrets.nonEmpty) cd.setSecrets(secrets.asJava)
-    if (systemControls.nonEmpty) cd.setSystemControls(systemControls.asJava)
-    if (ulimits.nonEmpty) cd.setUlimits(ulimits.asJava)
-    if (user.isPresent) cd.setUser(user.get)
-    if (volumesFrom.nonEmpty) cd.setVolumesFrom(volumesFrom.asJava)
-    if (workingDirectory.isPresent) cd.setWorkingDirectory(workingDirectory.get)
+    cd.setCommand(c.parseSeq("command").asJava)
+    c.getOpt("cpu").foreach(cd.setCpu)
+    c.getOpt("disable_networking").foreach(cd.setDisableNetworking)
+    c.parseSeqOpt[String]("dns_search_domains").map(_.asJava).foreach(cd.setDnsSearchDomains)
+    c.parseSeqOpt[String]("dns_servers").map(_.asJava).foreach(cd.setDnsServers)
+    c.getMapOpt[String, String]("docker_labels").map(_.asJava).foreach(cd.setDockerLabels)
+    c.parseSeqOpt[String]("docker_security_options").map(_.asJava).foreach(cd.setDockerSecurityOptions)
+    c.parseSeqOpt[String]("entry_point").map(_.asJava).foreach(cd.setEntryPoint)
+    c.getMapOpt[String, String]("environments")
+      .map(_.map(envMap => new KeyValuePair().withName(envMap._1).withValue(envMap._2)).toSeq.asJava)
+      .foreach(cd.setEnvironment) // TODO: merge params?
+    c.getOpt("essential").foreach(cd.setEssential)
+    c.getMapOpt[String, String]("extra_hosts")
+      .map(_.map(hostMap => new HostEntry().withHostname(hostMap._1).withIpAddress(hostMap._2)).toSeq.asJava)
+      .foreach(cd.setExtraHosts)
+    c.parseNestedOpt("health_check").map(configureHealthCheck).foreach(cd.setHealthCheck)
+    c.getOpt("hostname").foreach(cd.setHostname)
+    c.getOpt("image").foreach(cd.setImage)
+    c.getOpt("interactive").foreach(cd.setInteractive)
+    c.parseSeqOpt[String]("links").map(_.asJava).foreach(cd.setLinks)
+    c.parseNestedOpt("linux_parameters").map(configureLinuxParameters).foreach(cd.setLinuxParameters)
+    c.parseNestedOpt("log_configuration").map(configureLogConfiguration).foreach(cd.setLogConfiguration)
+    c.getOpt("memory").foreach(cd.setMemory)
+    c.getOpt("memory_reservation").foreach(cd.setMemoryReservation)
+    c.parseNestedOptSeq("mount_points").map(_.map(configureMountPoint).asJava).foreach(cd.setMountPoints)
+    c.getOpt("name").foreach(cd.setName)
+    c.parseNestedOptSeq("port_mappings").map(_.map(configurePortMapping).asJava).foreach(cd.setPortMappings)
+    c.getOpt("privileged").foreach(cd.setPrivileged)
+    c.getOpt("pseudo_terminal").foreach(cd.setPseudoTerminal)
+    c.getOpt("readonly_root_filesystem").foreach(cd.setReadonlyRootFilesystem)
+    c.parseNestedOpt("repository_credentials").map(configureRepositoryCredentials).foreach(cd.setRepositoryCredentials)
+    c.parseNestedOptSeq("secrets").map(_.map(configureSecrets).asJava).foreach(cd.setSecrets)
+    c.parseNestedOptSeq("system_controls").map(_.map(configureSystemControl).asJava).foreach(cd.setSystemControls)
+    c.parseNestedOptSeq("ulimits").map(_.map(configureUlimit).asJava).foreach(cd.setUlimits)
+    c.getOpt("user").foreach(cd.setUser)
+    c.parseNestedOptSeq("ulimits").map(_.map(configureVolumeFrom).asJava).foreach(cd.setVolumesFrom)
+    c.getOpt("working_directory").foreach(cd.setWorkingDirectory)
 
-    Optional.of(cd)
+    cd
   }
 
-  protected def configureHealthCheck(c: Config): Optional[HealthCheck] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val command: Seq[String] = params.parseList("command", classOf[String]).asScala
-    val interval: Optional[Int] = params.getOptional("interval", classOf[Int])
-    val retries: Optional[Int] = params.getOptional("retries", classOf[Int])
-    val startPeriod: Optional[Int] = params.getOptional("start_period", classOf[Int])
-    val timeout: Optional[Int] = params.getOptional("timeout", classOf[Int])
-
+  protected def configureHealthCheck(c: DigdagConfig): HealthCheck = {
     val hc: HealthCheck = new HealthCheck()
-    hc.setCommand(command.asJava)
-    if (interval.isPresent) hc.setInterval(interval.get)
-    if (retries.isPresent) hc.setRetries(retries.get)
-    if (startPeriod.isPresent) hc.setStartPeriod(startPeriod.get)
-    if (timeout.isPresent) hc.setTimeout(timeout.get)
-
-    Optional.of(hc)
+    hc.setCommand(c.parseSeq("command").asJava)
+    c.getOpt("interval").foreach(hc.setInterval)
+    c.getOpt("retries").foreach(hc.setRetries)
+    c.getOpt("start_period").foreach(hc.setStartPeriod)
+    c.getOpt("timeout").foreach(hc.setTimeout)
+    hc
   }
 
-  protected def configureLinuxParameters(c: Config): Optional[LinuxParameters] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val capabilities: Optional[KernelCapabilities] = configureKernelCapabilities(c.parseNestedOrGetEmpty("capabilities"))
-    val devices: Seq[Device] = c.parseListOrGetEmpty("devices", classOf[Config]).asScala.map(configureDevice).map(_.get)
-    val initProcessEnabled: Optional[Boolean] = c.getOptional("init_process_enabled", classOf[Boolean])
-    val sharedMemorySize: Optional[Int] = c.getOptional("shared_memory_size", classOf[Int])
-    val tmpfs: Seq[Tmpfs] = c.parseListOrGetEmpty("tmpfs", classOf[Config]).asScala.map(configureTmpfs).map(_.get)
-
+  protected def configureLinuxParameters(c: DigdagConfig): LinuxParameters = {
     val lp: LinuxParameters = new LinuxParameters()
-    if (capabilities.isPresent) lp.setCapabilities(capabilities.get)
-    if (devices.nonEmpty) lp.setDevices(devices.asJava)
-    if (initProcessEnabled.isPresent) lp.setInitProcessEnabled(initProcessEnabled.get)
-    if (sharedMemorySize.isPresent) lp.setSharedMemorySize(sharedMemorySize.get)
-    if (tmpfs.nonEmpty) lp.setTmpfs(tmpfs.asJava)
+    c.parseNestedOpt("capabilities").map(configureKernelCapabilities).foreach(lp.setCapabilities)
+    c.parseSeqOpt[DigdagConfig]("devices").map(_.map(configureDevice).asJava).foreach(lp.setDevices)
+    c.getOpt("init_process_enabled").foreach(lp.setInitProcessEnabled)
+    c.getOpt("shared_memory_size").foreach(lp.setSharedMemorySize)
+    c.parseSeqOpt[DigdagConfig]("tmpfs").map(_.map(configureTmpfs).asJava).foreach(lp.setTmpfs)
 
-    Optional.of(lp)
+    lp
   }
 
-  protected def configureKernelCapabilities(c: Config): Optional[KernelCapabilities] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val add: Seq[String] = c.parseListOrGetEmpty("add", classOf[String]).asScala
-    val drop: Seq[String] = c.parseListOrGetEmpty("drop", classOf[String]).asScala
-
+  protected def configureKernelCapabilities(c: DigdagConfig): KernelCapabilities = {
     val kc: KernelCapabilities = new KernelCapabilities()
-    if (add.nonEmpty) kc.setAdd(add.asJava)
-    if (drop.nonEmpty) kc.setDrop(drop.asJava)
-
-    Optional.of(kc)
+    c.parseSeqOpt[String]("add").map(_.asJava).foreach(kc.setAdd)
+    c.parseSeqOpt[String]("drop").map(_.asJava).foreach(kc.setDrop)
+    kc
   }
 
-  protected def configureDevice(c: Config): Optional[Device] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val containerPath: Optional[String] = c.getOptional("container_path", classOf[String])
-    val hostPath: String = c.get("host_path", classOf[String])
-    val permissions: Seq[String] = c.parseListOrGetEmpty("permissions", classOf[String]).asScala
-
+  protected def configureDevice(c: DigdagConfig): Device = {
     val d: Device = new Device()
-    if (containerPath.isPresent) d.setContainerPath(containerPath.get)
-    d.setHostPath(hostPath)
-    if (permissions.nonEmpty) d.setPermissions(permissions.asJava)
-
-    Optional.of(d)
+    d.setHostPath(c.get("host_path"))
+    c.getOpt("container_path").foreach(d.setContainerPath)
+    c.parseSeqOpt[String]("permissions").map(_.asJava).foreach(d.setPermissions)
+    d
   }
 
-  protected def configureTmpfs(c: Config): Optional[Tmpfs] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val containerPath: String = c.get("container_path", classOf[String])
-    val mountOptions: Seq[String] = c.parseListOrGetEmpty("mount_options", classOf[String]).asScala
-    val size: Int = c.get("size", classOf[Int])
-
+  protected def configureTmpfs(c: DigdagConfig): Tmpfs = {
     val tmpfs: Tmpfs = new Tmpfs()
-    tmpfs.setContainerPath(containerPath)
-    if (mountOptions.nonEmpty) tmpfs.setMountOptions(mountOptions.asJava)
-    tmpfs.setSize(size)
-
-    Optional.of(tmpfs)
+    tmpfs.setContainerPath(c.get("container_path"))
+    tmpfs.setSize(c.get("size"))
+    c.parseSeqOpt[String]("mount_options").map(_.asJava).foreach(tmpfs.setMountOptions)
+    tmpfs
   }
 
-  protected def configureLogConfiguration(c: Config): Optional[LogConfiguration] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
-    val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
-
+  protected def configureLogConfiguration(c: DigdagConfig): LogConfiguration = {
     val lc: LogConfiguration = new LogConfiguration()
-    lc.setLogDriver(logDriver)
-    if (options.nonEmpty) lc.setOptions(options.asJava)
-
-    Optional.of(lc)
+    lc.setLogDriver(c.get[String]("log_driver")) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
+    c.getMapOpt[String, String]("options").map(_.asJava).foreach(lc.setOptions)
+    lc
   }
 
-  protected def configureMountPoint(c: Config): Optional[MountPoint] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val containerPath: Optional[String] = c.getOptional("container_path", classOf[String])
-    val readOnly: Optional[Boolean] = c.getOptional("read_only", classOf[Boolean])
-    val sourceVolume: Optional[String] = c.getOptional("source_volume", classOf[String])
-
+  protected def configureMountPoint(c: DigdagConfig): MountPoint = {
     val mp: MountPoint = new MountPoint()
-    if (containerPath.isPresent) mp.setContainerPath(containerPath.get)
-    if (readOnly.isPresent) mp.setReadOnly(readOnly.get)
-    if (sourceVolume.isPresent) mp.setSourceVolume(sourceVolume.get)
-
-    Optional.of(mp)
+    c.getOpt("container_path").foreach(mp.setContainerPath)
+    c.getOpt("read_only").foreach(mp.setReadOnly)
+    c.getOpt("source_volume").foreach(mp.setSourceVolume)
+    mp
   }
 
-  protected def configurePortMapping(c: Config): Optional[PortMapping] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val containerPort: Optional[Int] = c.getOptional("container_port", classOf[Int])
-    val hostPort: Optional[Int] = c.getOptional("host_port", classOf[Int])
-    val protocol: Optional[String] = c.getOptional("protocol", classOf[String])
-
+  protected def configurePortMapping(c: DigdagConfig): PortMapping = {
     val pm: PortMapping = new PortMapping()
-    if (containerPort.isPresent) pm.setContainerPort(containerPort.get)
-    if (hostPort.isPresent) pm.setHostPort(hostPort.get)
-    if (protocol.isPresent) pm.setProtocol(protocol.get)
-
-    Optional.of(pm)
+    c.getOpt("container_port").foreach(pm.setContainerPort)
+    c.getOpt("host_port").foreach(pm.setHostPort)
+    c.getOpt[String]("protocol").foreach(pm.setProtocol)
+    pm
   }
 
-  protected def configureRepositoryCredentials(c: Config): Optional[RepositoryCredentials] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val credentialsParameter: String = c.get("credentials_parameter", classOf[String])
-
+  protected def configureRepositoryCredentials(c: DigdagConfig): RepositoryCredentials = {
     val rc: RepositoryCredentials = new RepositoryCredentials()
-    rc.setCredentialsParameter(credentialsParameter)
-
-    Optional.of(rc)
+    rc.setCredentialsParameter(c.get("credentials_parameter"))
+    rc
   }
 
-  protected def configureSecrets(c: Config): Optional[Secret] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val name: String = c.get("name", classOf[String])
-    val valueFrom: String = c.get("value_from", classOf[String])
-
+  protected def configureSecrets(c: DigdagConfig): Secret = {
     val s: Secret = new Secret()
-    s.setName(name)
-    s.setValueFrom(valueFrom)
-
-    Optional.of(s)
+    s.setName(c.get("name"))
+    s.setValueFrom(c.get("value_from"))
+    s
   }
 
-  protected def configureSystemControl(c: Config): Optional[SystemControl] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val namespace: Optional[String] = c.getOptional("namespace", classOf[String])
-    val value: Optional[String] = c.getOptional("value", classOf[String])
-
+  protected def configureSystemControl(c: DigdagConfig): SystemControl = {
     val sc: SystemControl = new SystemControl()
-    if (namespace.isPresent) sc.setNamespace(namespace.get)
-    if (value.isPresent) sc.setValue(value.get)
-
-    Optional.of(sc)
+    c.getOpt("namespace").foreach(sc.setNamespace)
+    c.getOpt("value").foreach(sc.setValue)
+    sc
   }
 
-  protected def configureUlimit(c: Config): Optional[Ulimit] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val hardLimit: Int = c.get("hard_limit", classOf[Int])
-    val name: String = c.get("name", classOf[String])
-    val softLimit: Int = c.get("soft_limit", classOf[Int])
-
+  protected def configureUlimit(c: DigdagConfig): Ulimit = {
     val u: Ulimit = new Ulimit()
-    u.setHardLimit(hardLimit)
-    u.setName(name)
-    u.setSoftLimit(softLimit)
-
-    Optional.of(u)
+    u.setHardLimit(c.get("hard_limit"))
+    u.setName(c.get[String]("name"))
+    u.setSoftLimit(c.get("soft_limit"))
+    u
   }
 
-  protected def configureVolumeFrom(c: Config): Optional[VolumeFrom] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val readOnly: Optional[Boolean] = c.getOptional("read_only", classOf[Boolean])
-    val sourceContainer: Optional[String] = c.getOptional("source_container", classOf[String])
-
+  protected def configureVolumeFrom(c: DigdagConfig): VolumeFrom = {
     val vf: VolumeFrom = new VolumeFrom()
-    if (readOnly.isPresent) vf.setReadOnly(readOnly.get)
-    if (sourceContainer.isPresent) vf.setSourceContainer(sourceContainer.get)
-
-    Optional.of(vf)
+    c.getOpt("read_only").foreach(vf.setReadOnly)
+    c.getOpt("source_container").foreach(vf.setSourceContainer)
+    vf
   }
 
-  protected def configureTaskDefinitionPlacementConstraint(c: Config): Optional[TaskDefinitionPlacementConstraint] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val expression: Optional[String] = c.getOptional("expression", classOf[String])
-    val `type`: Optional[String] = c.getOptional("type", classOf[String])
-
-    val tdpc: TaskDefinitionPlacementConstraint = new TaskDefinitionPlacementConstraint()
-    if (expression.isPresent) tdpc.setExpression(expression.get)
-    if (`type`.isPresent) tdpc.setType(`type`.get)
-
-    Optional.of(tdpc)
+  protected def configureTaskDefinitionPlacementConstraint(c: DigdagConfig): TaskDefinitionPlacementConstraint = {
+    val tdpc = new TaskDefinitionPlacementConstraint()
+    c.getOpt("expression").foreach(tdpc.setExpression)
+    c.getOpt[String]("type").foreach(tdpc.setType)
+    tdpc
   }
 
-  protected def configureVolume(c: Config): Optional[Volume] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val dockerVolumeConfiguration: Optional[DockerVolumeConfiguration] = configureDockerVolumeConfiguration(
-      c.parseNestedOrGetEmpty("docker_volume_configuration")
-    )
-    val host: Optional[HostVolumeProperties] = configureHostVolumeProperties(c.parseNestedOrGetEmpty("host"))
-    val name: Optional[String] = c.getOptional("name", classOf[String])
-
+  protected def configureVolume(c: DigdagConfig): Volume = {
     val v: Volume = new Volume()
-    if (dockerVolumeConfiguration.isPresent) v.setDockerVolumeConfiguration(dockerVolumeConfiguration.get)
-    if (host.isPresent) v.setHost(host.get)
-    if (name.isPresent) v.setName(name.get)
-
-    Optional.of(v)
+    c.parseNestedOpt("docker_volume_configuration").map(configureDockerVolumeConfiguration).foreach(v.setDockerVolumeConfiguration)
+    c.parseNestedOpt("host").map(configureHostVolumeProperties).foreach(v.setHost)
+    c.getOpt("name").foreach(v.setName)
+    v
   }
 
-  protected def configureDockerVolumeConfiguration(c: Config): Optional[DockerVolumeConfiguration] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val autoprovision: Optional[Boolean] = c.getOptional("autoprovision", classOf[Boolean])
-    val driver: Optional[String] = c.getOptional("driver", classOf[String])
-    val driverOpts: Map[String, String] = c.getMapOrEmpty("driver_opts", classOf[String], classOf[String]).asScala.toMap
-    val labels: Map[String, String] = c.getMapOrEmpty("labels", classOf[String], classOf[String]).asScala.toMap
-    val scope: Optional[String] = c.getOptional("scope", classOf[String])
-
+  protected def configureDockerVolumeConfiguration(c: DigdagConfig): DockerVolumeConfiguration = {
     val dvc: DockerVolumeConfiguration = new DockerVolumeConfiguration()
-    if (autoprovision.isPresent) dvc.setAutoprovision(autoprovision.get)
-    if (driver.isPresent) dvc.setDriver(driver.get)
-    if (driverOpts.nonEmpty) dvc.setDriverOpts(driverOpts.asJava)
-    if (labels.nonEmpty) dvc.setLabels(labels.asJava)
-    if (scope.isPresent) dvc.setScope(scope.get)
-
-    Optional.of(dvc)
+    c.getOpt("autoprovision").foreach(dvc.setAutoprovision)
+    c.getOpt("driver").foreach(dvc.setDriver)
+    c.getMapOpt[String, String]("driver_opts").map(_.asJava).foreach(dvc.setDriverOpts)
+    c.getMapOpt[String, String]("labels").map(_.asJava).foreach(dvc.setLabels)
+    c.getOpt("scope").foreach(dvc.setScope)
+    dvc
   }
 
-  protected def configureHostVolumeProperties(c: Config): Optional[HostVolumeProperties] = {
-    if (c.isEmpty) return Optional.absent()
-
-    val sourcePath: Optional[String] = c.getOptional("source_path", classOf[String])
-
+  protected def configureHostVolumeProperties(c: DigdagConfig): HostVolumeProperties = {
     val hvp: HostVolumeProperties = new HostVolumeProperties()
-    if (sourcePath.isPresent) hvp.setSourcePath(sourcePath.get)
-
-    Optional.of(hvp)
+    c.getOpt("source_path").foreach(hvp.setSourcePath)
+    hvp
   }
 
   override def runTask(): TaskResult = {
