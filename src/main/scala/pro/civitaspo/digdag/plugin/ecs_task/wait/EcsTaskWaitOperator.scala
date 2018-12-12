@@ -40,13 +40,14 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
       task.getContainers.asScala.foreach { container =>
         Option(container.getExitCode) match {
           case Some(code) =>
-            val msg = s"[${task.getTaskArn}] ${container.getName} has stopped with exit_code=$code"
-            logger.info(msg)
-            if (!code.equals(0)) failedMessages += msg
+            val message = s"[${task.getTaskArn}] ${container.getName} has stopped with exit_code=$code"
+            logger.info(message)
+            if (!code.equals(0)) failedMessages += message
           case None =>
-            val msg = s"[${task.getTaskArn}] ${container.getName} has stopped without exit_code: reason=${container.getReason}"
-            logger.info(msg)
-            failedMessages += msg
+            val message =
+              s"[${task.getTaskArn}] ${container.getName} has stopped without exit_code: reason=${container.getReason}, task_stopped_reason=${task.getStoppedReason}"
+            logger.info(message)
+            failedMessages += message
         }
       }
     }
