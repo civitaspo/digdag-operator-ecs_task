@@ -209,7 +209,8 @@ In addition, the below configurations exist.
 - **timeout**: Timeout duration for the tasks. (`DurationParam`, default: `15m`)
 - **condition**: The condition of tasks to wait. Available values are `"all"` or `"any"`. (string, default: `"all"`)
 - **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED"`)
-- **ignore_failure**: Ignore even if any tasks exit with the code except 0. (boolean, default: `false`) 
+- **ignore_failure**: Ignore even if any tasks exit with any status. This option is true, then the behaviour includes one of when **ignore_exit_code** is `true`. (boolean, default: `false`)
+- **ignore_exit_code**: Ignore even if any tasks exit with any exit code. When the containers of the task include one that does not have exit code, it is not ignored even if this option is `true`. (boolean, default: `false`) 
 
 ## Configuration for `ecs_task.result>` operator
 

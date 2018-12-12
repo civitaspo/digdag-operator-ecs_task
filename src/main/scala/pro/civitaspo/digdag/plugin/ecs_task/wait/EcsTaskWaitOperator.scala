@@ -16,6 +16,7 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
   val condition: String = params.get("condition", classOf[String], "all")
   val status: String = params.get("status", classOf[String], "STOPPED")
   val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
+  val ignoreExitCode: Boolean = params.get("ignore_exit_code", classOf[Boolean], false)
 
   override def runTask(): TaskResult = {
     val req: DescribeTasksRequest = new DescribeTasksRequest()
@@ -42,7 +43,10 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
           case Some(code) =>
             val message = s"[${task.getTaskArn}] ${container.getName} has stopped with exit_code=$code"
             logger.info(message)
-            if (!code.equals(0)) failedMessages += message
+            if (!code.equals(0)) {
+              if (!ignoreExitCode) failedMessages += message
+              else logger.warn(s"Ignore failures because of ignore_exit_code=true: $message")
+            }
           case None =>
             val message =
               s"[${task.getTaskArn}] ${container.getName} has stopped without exit_code: reason=${container.getReason}, task_stopped_reason=${task.getStoppedReason}"
