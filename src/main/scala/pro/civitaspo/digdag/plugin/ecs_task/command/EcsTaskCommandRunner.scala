@@ -21,6 +21,9 @@ case class EcsTaskCommandRunner(
 
   val cf: ConfigFactory = params.getFactory
 
+  // For the task group of ecs_task.internal_run and ecs_task.wait
+  val maxRetry: Int = params.get("max_retry", classOf[Int], 3)
+
   // For ecs_task.register>  operator (TaskDefinition)
   // NOTE: Use only 1 container
   // val containerDefinitions: Seq[ContainerDefinition] = params.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
@@ -110,13 +113,20 @@ case class EcsTaskCommandRunner(
   def run(): TaskResult = {
     val subTasks: Config = cf.create()
     subTasks.setNested("+register", ecsTaskRegisterSubTask())
-    subTasks.setNested("+run", ecsTaskRunInternalSubTask())
-    subTasks.setNested("+wait", ecsTaskWaitSubTask())
+    subTasks.setNested("+safe-run", runAndWaitWithRetryTaskGroup())
     subTasks.setNested("+result", ecsTaskResultSubTask())
 
     val builder = TaskResult.defaultBuilder(cf)
     builder.subtaskConfig(subTasks)
     builder.build()
+  }
+
+  def runAndWaitWithRetryTaskGroup(): Config = {
+    val taskGroup: Config = cf.create()
+    taskGroup.set("_retry", maxRetry)
+    taskGroup.setNested("+run", ecsTaskRunInternalSubTask())
+    taskGroup.setNested("+wait", ecsTaskWaitSubTask())
+    taskGroup
   }
 
   protected def ecsTaskRegisterSubTask(): Config = {
@@ -150,7 +160,7 @@ case class EcsTaskCommandRunner(
       subTask.set("cluster", cluster)
       subTask.set("tasks", "${last_ecs_task_run.task_arns}")
       subTask.set("timeout", timeout.toString)
-      subTask.set("ignore_failure", true)
+      subTask.set("ignore_exit_code", true)
     }
   }
 

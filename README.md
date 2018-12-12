@@ -227,6 +227,7 @@ In addition, the below configurations exist.
 
 ## Scripting Operators Common Configurations
 
+- **max_retry**: Max number of retry when scripting container has no exit code. (integer, default: `3`)
 - **sidecars**: A list of container definitions except the container for scripting operator. (array of map, optional)
     - The configuration map is the same as the snake-cased [API_ContainerDefinition](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html)
 - **cpu**: The number of CPU units used by the task. It can be expressed as an integer using CPU units, for example `1024`, or as a string using vCPUs, for example `1 vCPU` or `1 vcpu`, in a task definition. String values are converted to an integer indicating the CPU units when the task definition is registered. (string, optional)
