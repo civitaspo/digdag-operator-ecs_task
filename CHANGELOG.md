@@ -1,3 +1,8 @@
+0.0.8 (2018-12-14)
+==================
+* [Enhancement] Retry scripting operator when the container exit without exit code.
+* [Enhancement] Strip the line end of command for redirecting operation in `run.sh`.
+
 0.0.7 (2018-11-19)
 ==================
 
