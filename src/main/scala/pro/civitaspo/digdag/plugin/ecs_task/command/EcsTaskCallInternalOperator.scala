@@ -4,7 +4,7 @@ import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
 class EcsTaskCallInternalOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
-  extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
+    extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
   protected val doConfig: Config = params.getNested("_do")
 
