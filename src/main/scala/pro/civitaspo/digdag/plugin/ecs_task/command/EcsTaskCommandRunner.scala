@@ -113,7 +113,7 @@ case class EcsTaskCommandRunner(
   def run(): TaskResult = {
     val subTasks: Config = cf.create()
     subTasks.setNested("+register", ecsTaskRegisterSubTask())
-    subTasks.setNested("+safe-run", runAndWaitWithRetryTaskGroup())
+    subTasks.setNested("+with-retry", runAndWaitWithRetryTaskGroup())
     subTasks.setNested("+result", ecsTaskResultSubTask())
 
     val builder = TaskResult.defaultBuilder(cf)
@@ -122,10 +122,16 @@ case class EcsTaskCommandRunner(
   }
 
   def runAndWaitWithRetryTaskGroup(): Config = {
+    val subTaskGroup: Config = cf.create()
+    subTaskGroup.setNested("+run", ecsTaskRunInternalSubTask())
+    subTaskGroup.setNested("+wait", ecsTaskWaitSubTask())
+
     val taskGroup: Config = cf.create()
     taskGroup.set("_retry", maxRetry)
-    taskGroup.setNested("+run", ecsTaskRunInternalSubTask())
-    taskGroup.setNested("+wait", ecsTaskWaitSubTask())
+    // NOTE: workaround for the issue
+    //       "Group retry does not work in call> operator" https://github.com/treasure-data/digdag/issues/849
+    taskGroup.set("_type", "ecs_task.call_internal")
+    taskGroup.setNested("_do", subTaskGroup)
     taskGroup
   }
 
