@@ -28,7 +28,7 @@ class EcsTaskShOperatar(operatorName: String, context: OperatorContext, systemCo
     dup.set("ECS_TASK_SH_BUCKET", AmazonS3UriWrapper(tmpStorage.getLocation).getBucket)
     dup.set("ECS_TASK_SH_PREFIX", AmazonS3UriWrapper(tmpStorage.getLocation).getKey)
     dup.set("ECS_TASK_SH_EXPORT_ENV", convertParamsAsEnv().map { case (k: String, v: String) => s"$k=$v" }.mkString(" "))
-    dup.set("ECS_TASK_SH_COMMAND", command)
+    dup.set("ECS_TASK_SH_COMMAND", command.stripLineEnd)
 
     TryWithResource(classOf[EcsTaskShOperatar].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
