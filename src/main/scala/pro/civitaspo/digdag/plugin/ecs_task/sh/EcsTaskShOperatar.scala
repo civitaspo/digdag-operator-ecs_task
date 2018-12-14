@@ -8,9 +8,8 @@ import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.Try
 
-class EcsTaskShOperotar(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
+class EcsTaskShOperatar(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskCommandOperator(operatorName, context, systemConfig, templateEngine) {
 
   private val runShResourcePath: String = "/pro/civitaspo/digdag/plugin/ecs_task/sh/run.sh"
@@ -29,9 +28,9 @@ class EcsTaskShOperotar(operatorName: String, context: OperatorContext, systemCo
     dup.set("ECS_TASK_SH_BUCKET", AmazonS3UriWrapper(tmpStorage.getLocation).getBucket)
     dup.set("ECS_TASK_SH_PREFIX", AmazonS3UriWrapper(tmpStorage.getLocation).getKey)
     dup.set("ECS_TASK_SH_EXPORT_ENV", convertParamsAsEnv().map { case (k: String, v: String) => s"$k=$v" }.mkString(" "))
-    dup.set("ECS_TASK_SH_COMMAND", command)
+    dup.set("ECS_TASK_SH_COMMAND", command.stripLineEnd)
 
-    TryWithResource(classOf[EcsTaskShOperotar].getResourceAsStream(runShResourcePath)) { is =>
+    TryWithResource(classOf[EcsTaskShOperatar].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
       templateEngine.template(runShContentTemplate, dup)
     }
