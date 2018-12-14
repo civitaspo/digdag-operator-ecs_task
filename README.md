@@ -209,7 +209,8 @@ In addition, the below configurations exist.
 - **timeout**: Timeout duration for the tasks. (`DurationParam`, default: `15m`)
 - **condition**: The condition of tasks to wait. Available values are `"all"` or `"any"`. (string, default: `"all"`)
 - **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED"`)
-- **ignore_failure**: Ignore even if any tasks exit with the code except 0. (boolean, default: `false`) 
+- **ignore_failure**: Ignore even if any tasks exit with any status. This option is true, then the behaviour includes one of when **ignore_exit_code** is `true`. (boolean, default: `false`)
+- **ignore_exit_code**: Ignore even if any tasks exit with any exit code. When the containers of the task include one that does not have exit code, it is not ignored even if this option is `true`. (boolean, default: `false`) 
 
 ## Configuration for `ecs_task.result>` operator
 
@@ -226,6 +227,7 @@ In addition, the below configurations exist.
 
 ## Scripting Operators Common Configurations
 
+- **max_retry**: Max number of retry when scripting container has no exit code. (integer, default: `3`)
 - **sidecars**: A list of container definitions except the container for scripting operator. (array of map, optional)
     - The configuration map is the same as the snake-cased [API_ContainerDefinition](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html)
 - **cpu**: The number of CPU units used by the task. It can be expressed as an integer using CPU units, for example `1024`, or as a string using vCPUs, for example `1 vCPU` or `1 vcpu`, in a task definition. String values are converted to an integer indicating the CPU units when the task definition is registered. (string, optional)
