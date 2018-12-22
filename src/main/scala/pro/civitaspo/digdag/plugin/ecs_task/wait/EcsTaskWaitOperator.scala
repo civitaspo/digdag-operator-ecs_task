@@ -1,5 +1,6 @@
 package pro.civitaspo.digdag.plugin.ecs_task.wait
-import com.amazonaws.services.ecs.model.{DescribeTasksRequest, DescribeTasksResult, Failure}
+import com.amazonaws.services.ecs.model.{DescribeTasksRequest, DescribeTasksResult, Failure, StopTaskRequest}
+import com.google.common.base.Throwables
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import io.digdag.util.DurationParam
@@ -25,8 +26,21 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
 
     aws.withEcs { ecs =>
       val waiter: EcsTaskWaiter = EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status)
-      try waiter.wait(req)
-      finally waiter.shutdown()
+      try {
+        waiter.wait(req)
+      } catch {
+        case e: Throwable =>
+          logger.warn(s"Stop tasks: tasks=[${tasks.mkString(",")}] reason=${e.getMessage}")
+          tasks.foreach { t =>
+            try ecs.stopTask(new StopTaskRequest().withCluster(cluster).withTask(t).withReason(e.getMessage))
+            catch {
+              case e: Throwable => logger.warn(s"Failed to stop task: task=${t}, reason=${e.getMessage}")
+            }
+          }
+          throw Throwables.propagate(e)
+      } finally {
+        waiter.shutdown()
+      }
     }
     val result: DescribeTasksResult = aws.withEcs(_.describeTasks(req))
     val failures: Seq[Failure] = result.getFailures.asScala
