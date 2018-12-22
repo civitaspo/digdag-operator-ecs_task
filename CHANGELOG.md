@@ -1,3 +1,7 @@
+0.0.9 (2018-12-23)
+==================
+* [Enhancement] Stop tasks on waiting failure.
+
 0.0.8 (2018-12-14)
 ==================
 * [Enhancement] Retry scripting operator when the container exit without exit code.
