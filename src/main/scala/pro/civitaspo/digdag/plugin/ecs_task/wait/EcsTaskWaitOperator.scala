@@ -26,8 +26,9 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
 
     aws.withEcs { ecs =>
       val waiter: EcsTaskWaiter = EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status)
-      try waiter.wait(req)
-      catch {
+      try {
+        waiter.wait(req)
+      } catch {
         case e: Throwable =>
           logger.warn(s"Stop tasks: tasks=[${tasks.mkString(",")}] reason=${e.getMessage}")
           tasks.foreach { t =>
@@ -37,8 +38,9 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
             }
           }
           throw Throwables.propagate(e)
+      } finally {
+        waiter.shutdown()
       }
-      finally waiter.shutdown()
     }
     val result: DescribeTasksResult = aws.withEcs(_.describeTasks(req))
     val failures: Seq[Failure] = result.getFailures.asScala
