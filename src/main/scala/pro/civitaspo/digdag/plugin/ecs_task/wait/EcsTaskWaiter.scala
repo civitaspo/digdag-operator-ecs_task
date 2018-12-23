@@ -76,7 +76,7 @@ case class EcsTaskWaiter(
           s"Waiting ${waitingMillis}ms for that $condition tasks [${output.getTasks.asScala.map(t => s"${t.getTaskArn}:${t.getLastStatus}").mkString(",")}] become $status."
         )
         if (waitingMillis > timeout.getDuration.toMillis) {
-          throw new WaiterTimedOutException(s"Reached timeout ${timeout.getDuration.toMillis}ms without transitioning to the desired state")
+          throw new WaiterTimedOutException(s"Reached timeout ${timeout.getDuration.toMillis}ms without transitioning to the desired state '$status'.")
         }
 
         condition match {

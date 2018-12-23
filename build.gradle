@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'pro.civitaspo'
-version = '0.0.8'
+version = '0.0.9'
 
 def digdagVersion = '0.9.31'
 def scalaSemanticVersion = "2.12.6"
