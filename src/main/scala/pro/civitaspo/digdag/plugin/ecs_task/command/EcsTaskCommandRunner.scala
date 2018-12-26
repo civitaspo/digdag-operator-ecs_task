@@ -1,6 +1,9 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
+import java.nio.charset.StandardCharsets
+
 import com.google.common.base.Optional
-import io.digdag.client.config.{Config, ConfigFactory}
+import io.digdag.client.config.{Config, ConfigException, ConfigFactory}
 import io.digdag.spi.TaskResult
 import io.digdag.util.DurationParam
 import org.slf4j.Logger
@@ -8,6 +11,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.VERSION
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
 import scala.collection.JavaConverters._
+import scala.util.hashing.MurmurHash3
 import scala.util.matching.Regex
 
 case class EcsTaskCommandRunner(
@@ -35,7 +39,30 @@ case class EcsTaskCommandRunner(
   val familyPrefix: String = params.get("family_prefix", classOf[String], "")
   val familySuffix: String = params.get("family_suffix", classOf[String], "")
   val familyInfix: String = params.get("family_infix", classOf[String], taskName)
-  val family: String = params.get("family", classOf[String], s"$familyPrefix$familyInfix$familySuffix")
+
+  val family: String =
+    params
+      .get(
+        "family",
+        classOf[String], {
+          val defaultFamilyName: String = s"$familyPrefix$familyInfix$familySuffix"
+          // NOTE: Up to 255 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed.
+          // ref. https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RegisterTaskDefinition.html#ECS-RegisterTaskDefinition-request-family
+          if (defaultFamilyName.length <= 255) defaultFamilyName
+          else {
+            val workflowName: String = taskName.split("\\+").filter(_.nonEmpty).head
+            val taskNameHash: String = {
+              val seed: Int = 65432 // NOTE: For reproducibility
+              MurmurHash3.bytesHash(taskName.getBytes(StandardCharsets.UTF_8), seed).abs.toString
+            }
+            val defaultFamilyNameWithHashing: String = s"$familyPrefix$workflowName-$taskNameHash$familySuffix"
+            if (defaultFamilyNameWithHashing.length > 255) throw new ConfigException(s"Cannot shorten the family name: $defaultFamilyName")
+            else logger.warn(s"Shorten with MurmurHash3: $defaultFamilyName -> $defaultFamilyNameWithHashing")
+
+            defaultFamilyNameWithHashing
+          }
+        }
+      )
   val ipcMode: Optional[String] = params.getOptional("ipc_mode", classOf[String])
   val memory: Optional[String] = params.getOptional("memory", classOf[String])
   val networkMode: Optional[String] = params.getOptional("network_mode", classOf[String])
