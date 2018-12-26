@@ -1,3 +1,7 @@
+0.0.10 (2018-12-26)
+===================
+* [Enhancement] Shorten the family name with MurmurHash3 if auto-generated family name exceeds 255 letters.
+
 0.0.9 (2018-12-23)
 ==================
 * [Enhancement] Stop tasks on waiting failure.
