@@ -1,3 +1,7 @@
+0.0.11 (2019-01-24)
+===================
+* [Enhancement] `ecs_task.wait>` operator supports changeable interval and exponential backoff storategy. @Mulyu++
+
 0.0.10 (2018-12-26)
 ===================
 * [Enhancement] Shorten the family name with MurmurHash3 if auto-generated family name exceeds 255 letters.
