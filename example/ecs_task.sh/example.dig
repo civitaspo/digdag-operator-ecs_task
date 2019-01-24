@@ -7,7 +7,7 @@
       message:
         message: 'hello ecs_task.sh'
         created_by: civitaspo
-
+  
   +step1:
     +exceeds-255-letters:
       +dummy-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx:
@@ -21,5 +21,16 @@
                   message:
                     message: 'hello ecs_task.sh'
                     created_by: civitaspo
+  +step2:
+    ecs_task.sh>: sleep 15
+    image: civitaspo/digdag-awscli:latest
+    _export:
+      ecs_task:
+        wait:
+          polling_strategy:
+            interval_type: exponential
+            limit: 4
+            interval: 2
+
 
 

@@ -15,7 +15,7 @@ _export:
     repositories:
       - https://jitpack.io
     dependencies:
-      - pro.civitaspo:digdag-operator-ecs_task:0.0.10
+      - pro.civitaspo:digdag-operator-ecs_task:0.0.11
   ecs_task:
     auth_method: profile
     tmp_storage:
@@ -210,7 +210,11 @@ In addition, the below configurations exist.
 - **condition**: The condition of tasks to wait. Available values are `"all"` or `"any"`. (string, default: `"all"`)
 - **status**: The status of tasks to wait. Available values are `"PENDING"`, `"RUNNING"`, or `"STOPPED"` (string, default: `"STOPPED"`)
 - **ignore_failure**: Ignore even if any tasks exit with any status. This option is true, then the behaviour includes one of when **ignore_exit_code** is `true`. (boolean, default: `false`)
-- **ignore_exit_code**: Ignore even if any tasks exit with any exit code. When the containers of the task include one that does not have exit code, it is not ignored even if this option is `true`. (boolean, default: `false`) 
+- **ignore_exit_code**: Ignore even if any tasks exit with any exit code. When the containers of the task include one that does not have exit code, it is not ignored even if this option is `true`. (boolean, default: `false`)
+- **polling_strategy**: The polling strategy settings of wait.
+  - **interval_type**: The interval type of wait. Available values are `"constant"` or `"exponential"`. (string, default: `"constant"`)
+  - **limit**: Max number of polling try. (integer, optional)
+  - **interval**: Delay interval of wait. The time unit is seconds. (integer, default: `1`)
 
 ## Configuration for `ecs_task.result>` operator
 

@@ -18,6 +18,7 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
   val status: String = params.get("status", classOf[String], "STOPPED")
   val ignoreFailure: Boolean = params.get("ignore_failure", classOf[Boolean], false)
   val ignoreExitCode: Boolean = params.get("ignore_exit_code", classOf[Boolean], false)
+  val pollingStrategy: Config = params.getNestedOrGetEmpty("polling_strategy")
 
   override def runTask(): TaskResult = {
     val req: DescribeTasksRequest = new DescribeTasksRequest()
@@ -25,7 +26,8 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
       .withTasks(tasks: _*)
 
     aws.withEcs { ecs =>
-      val waiter: EcsTaskWaiter = EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status)
+      val waiter: EcsTaskWaiter =
+        EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status, pollingStrategy = pollingStrategy)
       try {
         waiter.wait(req)
       } catch {
