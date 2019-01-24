@@ -26,7 +26,8 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
       .withTasks(tasks: _*)
 
     aws.withEcs { ecs =>
-      val waiter: EcsTaskWaiter = EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status, pollingStrategy = pollingStrategy)
+      val waiter: EcsTaskWaiter =
+        EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status, pollingStrategy = pollingStrategy)
       try {
         waiter.wait(req)
       } catch {
