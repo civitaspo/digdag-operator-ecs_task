@@ -25,6 +25,7 @@ case class EcsTaskWaiter(
   sealed trait IntervalType {
     def value: String = toString
   }
+
   object IntervalType {
     case object constant extends IntervalType
     case object exponential extends IntervalType
@@ -90,10 +91,7 @@ case class EcsTaskWaiter(
   }
 
   private def newPollingStrategy(): PollingStrategy = {
-    new PollingStrategy(
-      new MaxAttemptsRetryStrategy(limit),
-      delayStrategy
-    )
+    new PollingStrategy(new MaxAttemptsRetryStrategy(limit), delayStrategy)
   }
 
 }
