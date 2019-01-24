@@ -1,21 +1,12 @@
 package pro.civitaspo.digdag.plugin.ecs_task.wait
-import java.util.concurrent.{Executors, ExecutorService}
+import java.util.concurrent.{ExecutorService, Executors}
 
 import com.amazonaws.services.ecs.AmazonECS
 import com.amazonaws.services.ecs.model.{DescribeTasksRequest, DescribeTasksResult}
 import com.amazonaws.services.ecs.waiters.DescribeTasksFunction
-import com.amazonaws.waiters.{
-  FixedDelayStrategy,
-  MaxAttemptsRetryStrategy,
-  PollingStrategy,
-  Waiter,
-  WaiterAcceptor,
-  WaiterBuilder,
-  WaiterParameters,
-  WaiterState,
-  WaiterTimedOutException
-}
-import io.digdag.client.config.ConfigException
+import com.amazonaws.waiters.PollingStrategy.DelayStrategy
+import com.amazonaws.waiters._
+import io.digdag.client.config.{Config, ConfigException}
 import io.digdag.util.DurationParam
 import org.slf4j.Logger
 
@@ -27,8 +18,36 @@ case class EcsTaskWaiter(
   executorService: ExecutorService = Executors.newFixedThreadPool(50),
   timeout: DurationParam,
   condition: String,
-  status: String
+  status: String,
+  pollingStrategy: Config
 ) {
+
+  sealed trait IntervalType {
+    def value: String = toString
+  }
+  object IntervalType {
+    case object constant extends IntervalType
+    case object exponential extends IntervalType
+    private val values = Seq(constant, exponential)
+
+    def from(value: String): IntervalType =
+      values.find(_.value == value).getOrElse {
+        val message: String = s"""interval_type: \"$value\" is not supported. Available `interval_type`s are \"constant\", \"exponential\"."""
+        throw new ConfigException(message)
+      }
+  }
+
+  val limit: Int = pollingStrategy.get("limit", classOf[Int], Int.MaxValue)
+  val interval: Int = pollingStrategy.get("interval", classOf[Int], 1)
+  val intervalType: String = pollingStrategy.get("interval_type", classOf[String], IntervalType.constant.value)
+
+  private def delayStrategy: DelayStrategy =
+    IntervalType.from(intervalType) match {
+      case IntervalType.constant =>
+        new FixedDelayStrategy(interval)
+      case IntervalType.exponential =>
+        new ExponentialBackoffDelayStrategy(interval)
+    }
 
   def wait(req: DescribeTasksRequest): Unit = {
     newWaiter().run(new WaiterParameters[DescribeTasksRequest]().withRequest(req))
@@ -72,8 +91,8 @@ case class EcsTaskWaiter(
 
   private def newPollingStrategy(): PollingStrategy = {
     new PollingStrategy(
-      new MaxAttemptsRetryStrategy(Int.MaxValue),
-      new FixedDelayStrategy(1) // seconds
+      new MaxAttemptsRetryStrategy(limit),
+      delayStrategy
     )
   }
 
