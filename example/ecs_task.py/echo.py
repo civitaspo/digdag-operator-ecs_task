@@ -1,6 +1,6 @@
 import yaml
 
 
-def echo(message):
+def echo(message: str):
     print(yaml.dump(message))
 
