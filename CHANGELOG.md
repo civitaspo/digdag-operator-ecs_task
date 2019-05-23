@@ -1,3 +1,10 @@
+0.0.12 (2019-05-23)
+===================
+* [Enhancement] Follow latest python runner script used by `ecs_task.py>`. The changes resolve the same issues that the bellow p-rs resolve.
+    * [Support type hints for Python3 on py> operator by chezou · Pull Request \#905 · treasure\-data/digdag](https://github.com/treasure-data/digdag/pull/905)
+    * [Fix default argument check on py> operator by chezou · Pull Request \#913 · treasure\-data/digdag](https://github.com/treasure-data/digdag/pull/913)
+    * [Fix digdag\.env\.add\_subtask for python3 by sonots · Pull Request \#972 · treasure\-data/digdag](https://github.com/treasure-data/digdag/pull/972)
+
 0.0.11 (2019-01-24)
 ===================
 * [Enhancement] `ecs_task.wait>` operator supports changeable interval and exponential backoff storategy. @Mulyu++
