@@ -1,14 +1,14 @@
 #########
-# Copy from https://raw.githubusercontent.com/treasure-data/digdag/52ff276bcc0aed23bf5a0df6c7a7c7b155c22d53/digdag-standards/src/main/resources/digdag/standards/py/runner.py
+# Copy from https://raw.githubusercontent.com/treasure-data/digdag/6c81976334b78b3b776e357c7e9244f6bbe2711a/digdag-standards/src/main/resources/digdag/standards/py/runner.py
 # Then, customize a bit about error handling
 #########
 
-import collections
+import sys
+import os
+import json
 import imp
 import inspect
-import json
-import os
-import sys
+import collections
 import traceback
 
 command = sys.argv[1]
@@ -30,7 +30,6 @@ import digdag_env
 
 # fake digdag module already imported
 digdag_mod = sys.modules['digdag'] = imp.new_module('digdag')
-
 
 class Env(object):
     def __init__(self, digdag_env_mod):
@@ -60,7 +59,7 @@ class Env(object):
                 command = ".".join([function.im_class.__module__, function.im_class.__name__, function.__name__])
             else:
                 # Python 3
-                command = ".".join([function.__module__, function.__name__])
+                command = ".".join([function.__module__, function.__qualname__])
             config = params
             config["py>"] = command
         else:
@@ -76,12 +75,11 @@ class Env(object):
         self.subtask_config["+subtask" + str(self.subtask_index)] = config
         self.subtask_index += 1
 
-
 digdag_mod.env = Env(digdag_env_mod)
+import digdag
 
 # add the archive path to improt path
 sys.path.append(os.path.abspath(os.getcwd()))
-
 
 def digdag_inspect_command(command):
     # package.name.Class.method
@@ -112,12 +110,17 @@ def digdag_inspect_command(command):
     else:
         return (callable_type, None)
 
-
 def digdag_inspect_arguments(callable_type, exclude_self, params):
     if callable_type == object.__init__:
         # object.__init__ accepts *varargs and **keywords but it throws exception
         return {}
-    spec = inspect.getargspec(callable_type)
+    if hasattr(inspect, 'getfullargspec'): # Python3
+        spec = inspect.getfullargspec(callable_type)
+        keywords_ = spec.varkw
+    else: # Python 2
+        spec = inspect.getargspec(callable_type)
+        keywords_ = spec.keywords
+
     args = {}
     for idx, key in enumerate(spec.args):
         if exclude_self and idx == 0:
@@ -125,7 +128,7 @@ def digdag_inspect_arguments(callable_type, exclude_self, params):
         if key in params:
             args[key] = params[key]
         else:
-            if spec.defaults is None or len(spec.defaults) < idx:
+            if spec.defaults is None or idx < len(spec.args) - len(spec.defaults):
                 # this keyword is required but not in params. raising an error.
                 if hasattr(callable_type, '__qualname__'):
                     # Python 3
@@ -136,13 +139,13 @@ def digdag_inspect_arguments(callable_type, exclude_self, params):
                 else:
                     name = callable_type.__name__
                 raise TypeError("Method '%s' requires parameter '%s' but not set" % (name, key))
-    if spec.keywords:
+    if keywords_:
         # above code was only for validation
         return params
     else:
         return args
 
-
+##### begin: Custom Error Handling Code #####
 status_params = {}
 def with_error_handler(func, **func_args):
     try:
@@ -154,6 +157,7 @@ def with_error_handler(func, **func_args):
         status_params['error_message'] = str(e)
         status_params['error_stacktrace'] = traceback.format_exc()
         print('message: {}, stacktrace: {}'.format(str(e), traceback.format_exc()))
+##### end: Custom Error Handling Code #####
 
 callable_type, method_name = digdag_inspect_command(command)
 
@@ -163,11 +167,13 @@ if method_name:
 
     method = getattr(instance, method_name)
     method_args = digdag_inspect_arguments(method, True, params)
+    # Replace the below code to customize error hadling
     # result = method(**method_args)
     result = with_error_handler(method, **method_args)
 
 else:
     args = digdag_inspect_arguments(callable_type, False, params)
+    # Replace the below code to customize error hadling
     # result = callable_type(**args)
     result = with_error_handler(callable_type, **args)
 
@@ -175,9 +181,10 @@ out = {
     'subtask_config': digdag_env.subtask_config,
     'export_params': digdag_env.export_params,
     'store_params': digdag_env.store_params,
+    #'state_params': digdag_env.state_params,  # only for retrying
     'status_params': status_params,  # only for ecs_task.command_result_internal
-    # 'state_params': digdag_env.state_params,  # only for retrying
 }
 
 with open(out_file, 'w') as f:
     json.dump(out, f)
+
