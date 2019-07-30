@@ -3,7 +3,7 @@ package pro.civitaspo.digdag.plugin.ecs_task
 import java.lang.reflect.Constructor
 import java.util.{Arrays => JArrays, List => JList}
 
-import io.digdag.client.config.Config
+import io.digdag.client.config.{Config, ConfigException}
 import io.digdag.spi.{Operator, OperatorContext, OperatorFactory, OperatorProvider, Plugin, TemplateEngine}
 import javax.inject.Inject
 import pro.civitaspo.digdag.plugin.ecs_task.command.{EcsTaskCallInternalOperator, EcsTaskCommandResultInternalOperator}
@@ -44,7 +44,12 @@ object EcsTaskPlugin {
         override def getType: String = operatorName
         override def newOperator(context: OperatorContext): Operator = {
           val constructor: Constructor[T] = klass.getConstructor(classOf[String], classOf[OperatorContext], classOf[Config], classOf[TemplateEngine])
-          constructor.newInstance(operatorName, context, systemConfig, templateEngine)
+          try {
+            constructor.newInstance(operatorName, context, systemConfig, templateEngine)
+          }
+          catch {
+            case e: Throwable => throw new ConfigException(e)
+          }
         }
       }
     }

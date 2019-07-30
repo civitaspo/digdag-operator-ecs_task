@@ -249,7 +249,7 @@ case class EcsTaskCommandRunner(
     val additionalLabels: Map[String, String] = Map("pro.civitaspo.digdag.plugin.ecs_task.version" -> VERSION)
     c.set("docker_labels", (dockerLabels ++ additionalLabels).asJava)
     c.set("entry_point", entryPoint.asJava)
-    c.set("environment", (configEnvironment ++ environments).asJava)
+    c.set("environments", (configEnvironment ++ environments).asJava)
     c.set("essential", true)
     c.set("extra_hosts", extraHosts.asJava)
     c.setOptional("health_check", healthCheck)
