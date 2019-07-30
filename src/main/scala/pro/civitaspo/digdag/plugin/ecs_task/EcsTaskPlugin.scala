@@ -46,8 +46,7 @@ object EcsTaskPlugin {
           val constructor: Constructor[T] = klass.getConstructor(classOf[String], classOf[OperatorContext], classOf[Config], classOf[TemplateEngine])
           try {
             constructor.newInstance(operatorName, context, systemConfig, templateEngine)
-          }
-          catch {
+          } catch {
             case e: Throwable => throw new ConfigException(e)
           }
         }
