@@ -1,3 +1,8 @@
+0.0.13 (2019-07-30)
+===================
+* [Fix] Fix environments bug: no environments in scripting operators
+* [Fix] Catch any initialization exception and re-throw as `ConfigException`
+
 0.0.12 (2019-05-23)
 ===================
 * [Enhancement] Follow latest python runner script used by `ecs_task.py>`. The changes resolve the same issues that the bellow p-rs resolve.

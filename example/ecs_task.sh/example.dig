@@ -3,6 +3,9 @@
   +step0:
     ecs_task.sh>: env
     image: civitaspo/digdag-awscli:latest
+    environments:
+      hoge: fuga
+      fugo: hogo
     _export:
       message:
         message: 'hello ecs_task.sh'
