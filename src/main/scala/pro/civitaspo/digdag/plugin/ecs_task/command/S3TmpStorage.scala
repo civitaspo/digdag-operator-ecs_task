@@ -48,7 +48,7 @@ case class S3TmpStorage(location: AmazonS3URI, aws: Aws, workspace: Workspace, l
   }
 
   override def buildTaskCommand(mainScript: String): Seq[String] = {
-    Seq("sh", "-c", s"aws s3 cp ${location.toString}/$mainScript ./ && /bin/bash $mainScript")
+    Seq("sh", "-c", s"aws s3 cp ${location.toString}/$mainScript ./ && bash $mainScript")
   }
 
   override def storeStagedFiles(): Unit = {
