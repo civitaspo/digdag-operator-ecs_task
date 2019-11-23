@@ -12,7 +12,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 import scala.collection.JavaConverters._
 import scala.util.Random
 
-case class S3TmpStorage(location: AmazonS3URI, aws: Aws, workspace: Workspace, logger: Logger) extends TmpStorage {
+case class S3TmpStorage(shellCommand: String, location: AmazonS3URI, aws: Aws, workspace: Workspace, logger: Logger) extends TmpStorage {
 
   private lazy val tmpDir: Path = createTmpDir()
 
@@ -48,7 +48,7 @@ case class S3TmpStorage(location: AmazonS3URI, aws: Aws, workspace: Workspace, l
   }
 
   override def buildTaskCommand(mainScript: String): Seq[String] = {
-    Seq("sh", "-c", s"aws s3 cp ${location.toString}/$mainScript ./ && sh $mainScript")
+    Seq(shellCommand, "-c", s"aws s3 cp ${location.toString}/$mainScript ./ && $shellCommand $mainScript")
   }
 
   override def storeStagedFiles(): Unit = {

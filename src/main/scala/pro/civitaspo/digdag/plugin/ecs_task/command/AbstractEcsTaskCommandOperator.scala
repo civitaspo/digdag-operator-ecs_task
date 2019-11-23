@@ -44,13 +44,14 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
   }
 
   private def buildS3TmpStorage(): S3TmpStorage = {
+    val shellCommand: String = params.get("shell", classOf[String], "sh")
     val uriString: String = tmpStorageConfig.get("uri", classOf[String])
     val random: String = Random.alphanumeric.take(10).mkString
     val uri: AmazonS3URI =
       if (uriString.endsWith("/")) AmazonS3UriWrapper(s"$uriString$operatorName.$sessionUuid.$random")
       else AmazonS3UriWrapper(s"$uriString/$operatorName.$sessionUuid.$random")
 
-    S3TmpStorage(location = uri, aws = aws, workspace = workspace, logger = logger)
+    S3TmpStorage(shellCommand = shellCommand, location = uri, aws = aws, workspace = workspace, logger = logger)
   }
 
   protected def collectEnvironments(): Map[String, String] = {
