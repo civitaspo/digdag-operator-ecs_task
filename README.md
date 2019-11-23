@@ -15,7 +15,7 @@ _export:
     repositories:
       - https://jitpack.io
     dependencies:
-      - pro.civitaspo:digdag-operator-ecs_task:0.0.13
+      - pro.civitaspo:digdag-operator-ecs_task:0.0.14
   ecs_task:
     auth_method: profile
     tmp_storage:
@@ -296,6 +296,9 @@ In addition, the below configurations exist.
 - **started_by**: An optional tag specified when a task is started. (string, optional)
 - **tags**: The metadata that you apply to the task to help you categorize and organize them. Each tag consists of a key and an optional value, both of which you define. Tag keys can have a maximum character length of 128 characters, and tag values can have a maximum length of 256 characters. (string to string map, optional)
     - For using this option, require [migrating Amazon ECS deployment to the new ARN and resource ID format](Migrating your Amazon ECS deployment to the new ARN and resource ID format).
+- **shell**: The shell command in your container. (string, default: `"sh"`)
+    - You can set the absolute path of the command.
+    - This option does not support `"dash"`. 
 - **workspace_s3_uri_prefix**: S3 uri prefix for using as workspace. (string, required)
     - Currently, input params, output params, stdout, stderr, and internal scripts are put on S3, and then they are not removed. So it's insecure unless strict access control to S3.
     - This option is **deprecated**. Please use **tmp_storage** option instead.
