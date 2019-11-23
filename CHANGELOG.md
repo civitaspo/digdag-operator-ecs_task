@@ -1,3 +1,7 @@
+0.0.14 (2019-11-24)
+===================
+* [Enhancement] Add `shell` option to change the shell command that the operator uses internally.
+
 0.0.13 (2019-07-30)
 ===================
 * [Fix] Fix environments bug: no environments in scripting operators
