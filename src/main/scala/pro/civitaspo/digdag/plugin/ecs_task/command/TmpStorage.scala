@@ -3,6 +3,8 @@ import io.digdag.util.Workspace
 
 trait TmpStorage extends AutoCloseable {
 
+  val shellCommand: String
+
   val workspace: Workspace
 
   def getLocation: String

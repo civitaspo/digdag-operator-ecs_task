@@ -35,5 +35,7 @@
             limit: 4
             interval: 2
 
-
-
+  +step3:
+    ecs_task.sh>: echo
+    image: civitaspo/digdag-awscli:latest
+    shell: ash
