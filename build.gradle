@@ -8,9 +8,9 @@ plugins {
 group = 'pro.civitaspo'
 version = '0.0.14'
 
-def digdagVersion = '0.9.31'
-def scalaSemanticVersion = "2.12.6"
-def depScalaVersion = "2.12"
+def digdagVersion = '0.9.39'
+def scalaSemanticVersion = "2.13.1"
+def depScalaVersion = "2.13"
 
 repositories {
     mavenCentral()
@@ -29,8 +29,12 @@ dependencies {
 
     ['ecs', 's3', 'sts'].each { svc ->
         // https://mvnrepository.com/artifact/com.amazonaws/
-        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.451'
+        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.685'
     }
+
+    testCompile group: 'org.scalatest', name: "scalatest_$depScalaVersion", version: '3.0.8'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'io.digdag', name: 'digdag-cli', version: digdagVersion
 }
 
 shadowJar {
