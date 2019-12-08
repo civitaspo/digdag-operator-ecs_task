@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import pro.civitaspo.digdag.plugin.ecs_task.VERSION
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 import scala.util.matching.Regex
 
@@ -31,7 +31,7 @@ case class EcsTaskCommandRunner(
   // For ecs_task.register>  operator (TaskDefinition)
   // NOTE: Use only 1 container
   // val containerDefinitions: Seq[ContainerDefinition] = params.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
-  val sidecars: Seq[Config] = params.parseListOrGetEmpty("sidecars", classOf[Config]).asScala
+  val sidecars: Seq[Config] = params.parseListOrGetEmpty("sidecars", classOf[Config]).asScala.toSeq
   val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
   val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
 
@@ -69,11 +69,11 @@ case class EcsTaskCommandRunner(
   val pidMode: Optional[String] = params.getOptional("pid_mode", classOf[String])
   // NOTE: Use `ecs_task.run>`'s one.
   // val placementConstraints: Seq[TaskDefinitionPlacementConstraint] = params.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
-  val requiresCompatibilities: Seq[String] = params.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala // Valid Values: EC2 | FARGATE
+  val requiresCompatibilities: Seq[String] = params.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
   // NOTE: Use the same var as `ecs_task.run>`'s one.
   // val tags: Optional[Config] = params.getOptionalNested("tags")
   val taskRoleArn: Optional[String] = params.getOptional("task_role_arn", classOf[String])
-  val volumes: Seq[Config] = params.parseListOrGetEmpty("volumes", classOf[Config]).asScala
+  val volumes: Seq[Config] = params.parseListOrGetEmpty("volumes", classOf[Config]).asScala.toSeq
 
   // For `ecs_task.register>` operator (ContainerDefinition)
   // NOTE: Set by this plugin
@@ -81,12 +81,12 @@ case class EcsTaskCommandRunner(
   // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val cpu: Optional[Int] = params.getOptional("cpu", classOf[Int])
   val disableNetworking: Optional[Boolean] = params.getOptional("disable_networking", classOf[Boolean])
-  val dnsSearchDomains: Seq[String] = params.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala
-  val dnsServers: Seq[String] = params.parseListOrGetEmpty("dns_servers", classOf[String]).asScala
+  val dnsSearchDomains: Seq[String] = params.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala.toSeq
+  val dnsServers: Seq[String] = params.parseListOrGetEmpty("dns_servers", classOf[String]).asScala.toSeq
   // NOTE: Add some labels by this plugin
   val dockerLabels: Map[String, String] = params.getMapOrEmpty("docker_labels", classOf[String], classOf[String]).asScala.toMap
-  val dockerSecurityOptions: Seq[String] = params.parseListOrGetEmpty("docker_security_options", classOf[String]).asScala
-  val entryPoint: Seq[String] = params.parseListOrGetEmpty("entry_point", classOf[String]).asScala
+  val dockerSecurityOptions: Seq[String] = params.parseListOrGetEmpty("docker_security_options", classOf[String]).asScala.toSeq
+  val entryPoint: Seq[String] = params.parseListOrGetEmpty("entry_point", classOf[String]).asScala.toSeq
   // NOTE: Add some envs by this plugin
   val configEnvironment: Map[String, String] = params.getMapOrEmpty("environments", classOf[String], classOf[String]).asScala.toMap
   // NOTE: This plugin uses only 1 container so `essential` is always true.
@@ -96,25 +96,25 @@ case class EcsTaskCommandRunner(
   val hostname: Optional[String] = params.getOptional("hostname", classOf[String])
   val image: Optional[String] = params.getOptional("image", classOf[String])
   val interactive: Optional[Boolean] = params.getOptional("interactive", classOf[Boolean])
-  val links: Seq[String] = params.parseListOrGetEmpty("links", classOf[String]).asScala
+  val links: Seq[String] = params.parseListOrGetEmpty("links", classOf[String]).asScala.toSeq
   val linuxParameters: Optional[Config] = params.getOptionalNested("linux_parameters")
   val logConfiguration: Optional[Config] = params.getOptionalNested("log_configuration")
   // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val memory: Optional[Int] = params.getOptional("memory", classOf[Int])
   // NOTE: If you set it by container level, use the `overrides` option.
   // val memoryReservation: Optional[Int] = params.getOptional("memory_reservation", classOf[Int])
-  val mountPoints: Seq[Config] = params.parseListOrGetEmpty("mount_points", classOf[Config]).asScala
+  val mountPoints: Seq[Config] = params.parseListOrGetEmpty("mount_points", classOf[Config]).asScala.toSeq
   val containerName: Optional[String] = params.getOptional("container_name", classOf[String])
-  val portMappings: Seq[Config] = params.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala
+  val portMappings: Seq[Config] = params.parseListOrGetEmpty("port_mappings", classOf[Config]).asScala.toSeq
   val privileged: Optional[Boolean] = params.getOptional("privileged", classOf[Boolean])
   val pseudoTerminal: Optional[Boolean] = params.getOptional("pseudo_terminal", classOf[Boolean])
   val readonlyRootFilesystem: Optional[Boolean] = params.getOptional("readonly_root_filesystem", classOf[Boolean])
   val repositoryCredentials: Optional[Config] = params.getOptionalNested("repository_credentials")
-  val secrets: Seq[Config] = params.parseListOrGetEmpty("secrets", classOf[Config]).asScala
-  val systemControls: Seq[Config] = params.parseListOrGetEmpty("system_controls", classOf[Config]).asScala
-  val ulimits: Seq[Config] = params.parseListOrGetEmpty("ulimits", classOf[Config]).asScala
+  val secrets: Seq[Config] = params.parseListOrGetEmpty("secrets", classOf[Config]).asScala.toSeq
+  val systemControls: Seq[Config] = params.parseListOrGetEmpty("system_controls", classOf[Config]).asScala.toSeq
+  val ulimits: Seq[Config] = params.parseListOrGetEmpty("ulimits", classOf[Config]).asScala.toSeq
   val user: Optional[String] = params.getOptional("user", classOf[String])
-  val volumesFrom: Seq[Config] = params.parseListOrGetEmpty("volumes_from", classOf[Config]).asScala
+  val volumesFrom: Seq[Config] = params.parseListOrGetEmpty("volumes_from", classOf[Config]).asScala.toSeq
   val workingDirectory: Optional[String] = params.getOptional("working_directory", classOf[String])
 
   // For ecs_task.run operator
@@ -124,8 +124,8 @@ case class EcsTaskCommandRunner(
   val launchType: Optional[String] = params.getOptional("launch_type", classOf[String])
   val networkConfiguration: Optional[Config] = params.getOptionalNested("network_configuration")
   val overrides: Optional[Config] = params.getOptionalNested("overrides")
-  val placementConstraints: Seq[Config] = params.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala
-  val placementStrategy: Seq[Config] = params.parseListOrGetEmpty("placement_strategy", classOf[Config]).asScala
+  val placementConstraints: Seq[Config] = params.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.toSeq
+  val placementStrategy: Seq[Config] = params.parseListOrGetEmpty("placement_strategy", classOf[Config]).asScala.toSeq
   val platformVersion: Optional[String] = params.getOptional("platform_version", classOf[String])
   val startedBy: Optional[String] = params.getOptional("started_by", classOf[String])
   val tags: Optional[Config] = params.getOptionalNested("tags")

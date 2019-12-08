@@ -6,13 +6,13 @@ import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import io.digdag.util.DurationParam
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
   val cluster: String = params.get("cluster", classOf[String])
-  val tasks: Seq[String] = params.parseList("tasks", classOf[String]).asScala
+  val tasks: Seq[String] = params.parseList("tasks", classOf[String]).asScala.toSeq
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
   val condition: String = params.get("condition", classOf[String], "all")
   val status: String = params.get("status", classOf[String], "STOPPED")
@@ -45,7 +45,7 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
       }
     }
     val result: DescribeTasksResult = aws.withEcs(_.describeTasks(req))
-    val failures: Seq[Failure] = result.getFailures.asScala
+    val failures: Seq[Failure] = result.getFailures.asScala.toSeq
     if (failures.nonEmpty) {
       val failureMessages: String = failures.map(_.toString).mkString(", ")
       if (!ignoreFailure) throw new IllegalStateException(s"Some tasks are failed: [$failureMessages]")

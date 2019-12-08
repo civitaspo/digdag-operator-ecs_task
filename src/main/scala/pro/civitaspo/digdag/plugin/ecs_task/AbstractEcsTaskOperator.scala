@@ -11,7 +11,7 @@ abstract class AbstractEcsTaskOperator(operatorName: String, context: OperatorCo
   protected val logger: Logger = LoggerFactory.getLogger(operatorName)
   protected val cf: ConfigFactory = request.getConfig.getFactory
   protected val params: Config = {
-    val elems: Seq[String] = operatorName.split("\\.")
+    val elems: Seq[String] = operatorName.split("\\.").toSeq
     elems.indices.foldLeft(request.getConfig) { (p: Config, idx: Int) =>
       p.mergeDefault((0 to idx).foldLeft(request.getConfig) { (nestedParam: Config, keyIdx: Int) =>
         nestedParam.getNestedOrGetEmpty(elems(keyIdx))

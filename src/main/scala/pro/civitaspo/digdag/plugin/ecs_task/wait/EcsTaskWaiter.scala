@@ -10,7 +10,7 @@ import io.digdag.client.config.{Config, ConfigException}
 import io.digdag.util.DurationParam
 import org.slf4j.Logger
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 case class EcsTaskWaiter(
   logger: Logger,
