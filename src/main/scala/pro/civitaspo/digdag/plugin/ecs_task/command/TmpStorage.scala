@@ -1,20 +1,26 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
+
 import io.digdag.util.Workspace
 
-trait TmpStorage extends AutoCloseable {
 
-  val shellCommand: String
+trait TmpStorage
+    extends AutoCloseable
+{
 
-  val workspace: Workspace
+    val shellCommand: String
 
-  def getLocation: String
+    val workspace: Workspace
 
-  def stageFile(fileName: String, content: String): Unit
+    def getLocation: String
 
-  def stageWorkspace(): Unit
+    def stageFile(fileName: String,
+                  content: String): Unit
 
-  def buildTaskCommand(mainScript: String): Seq[String]
+    def stageWorkspace(): Unit
 
-  def storeStagedFiles(): Unit
+    def buildTaskCommand(mainScript: String): Seq[String]
+
+    def storeStagedFiles(): Unit
 
 }
