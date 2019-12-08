@@ -16,7 +16,7 @@ class EcsTaskRbOperator(operatorName: String, context: OperatorContext, systemCo
   override protected val mainScriptName: String = "run.sh"
 
   protected val command: String = params.get("_command", classOf[String])
-  protected val gemInstall: Seq[String] = params.getListOrEmpty("gem_install", classOf[String]).asScala
+  protected val gemInstall: Seq[String] = params.getListOrEmpty("gem_install", classOf[String]).asScala.toSeq
   protected val requirePath: String = params.get("require", classOf[String])
 
   override def prepare(tmpStorage: TmpStorage): Unit = {

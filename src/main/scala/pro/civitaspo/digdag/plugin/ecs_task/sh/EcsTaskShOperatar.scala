@@ -37,7 +37,7 @@ class EcsTaskShOperatar(operatorName: String, context: OperatorContext, systemCo
   }
 
   protected def convertParamsAsEnv(params: Config = params): Map[String, String] = {
-    val keys: Seq[String] = params.getKeys.asScala
+    val keys: Seq[String] = params.getKeys.asScala.toSeq
     keys.foldLeft(Map.empty[String, String]) { (env, key) =>
       if (isValidEnvKey(key)) {
         val jn: JsonNode = params.getInternalObjectNode.get(key)

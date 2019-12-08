@@ -29,7 +29,7 @@ class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, syst
       templateEngine.template(embulkConfig.toString, params)
     }
   }
-  protected val embulkPlugins: Seq[String] = params.getListOrEmpty("embulk_plugins", classOf[String]).asScala
+  protected val embulkPlugins: Seq[String] = params.getListOrEmpty("embulk_plugins", classOf[String]).asScala.toSeq
 
   override def prepare(tmpStorage: TmpStorage): Unit = {
     tmpStorage.stageFile("config.yml", embulkConfig)

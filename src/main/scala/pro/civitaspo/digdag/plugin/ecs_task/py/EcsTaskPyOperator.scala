@@ -16,7 +16,7 @@ class EcsTaskPyOperator(operatorName: String, context: OperatorContext, systemCo
   override protected val mainScriptName: String = "run.sh"
 
   protected val command: String = params.get("_command", classOf[String])
-  protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala
+  protected val pipInstall: Seq[String] = params.getListOrEmpty("pip_install", classOf[String]).asScala.toSeq
 
   override def prepare(tmpStorage: TmpStorage): Unit = {
     tmpStorage.stageFile("in.json", createInJsonContent())
