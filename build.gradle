@@ -2,7 +2,6 @@ plugins {
     id 'scala'
     id 'maven-publish'
     id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id "com.diffplug.gradle.spotless" version "3.13.0"
 }
 
 group = 'pro.civitaspo'
@@ -65,12 +64,6 @@ publishing {
                 url "$buildDir/repo"
             }
         }
-    }
-}
-
-spotless {
-    scala {
-        scalafmt('1.5.1').configFile('.scalafmt.conf')
     }
 }
 
