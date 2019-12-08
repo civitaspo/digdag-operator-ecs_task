@@ -7,10 +7,9 @@ import io.digdag.util.Workspace
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import pro.civitaspo.digdag.plugin.ecs_task.aws.Aws
-import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.jdk.CollectionConverters._
-import scala.util.Random
+import scala.util.{Random, Using}
 
 case class S3TmpStorage(shellCommand: String, location: AmazonS3URI, aws: Aws, workspace: Workspace, logger: Logger) extends TmpStorage {
 
@@ -25,7 +24,7 @@ case class S3TmpStorage(shellCommand: String, location: AmazonS3URI, aws: Aws, w
 
   private def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-    TryWithResource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+      Using.resource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
       writer.write(content)
     }
   }

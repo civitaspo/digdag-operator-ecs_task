@@ -6,11 +6,10 @@ import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.command.{AbstractEcsTaskCommandOperator, TmpStorage}
-import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.jdk.CollectionConverters._
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Try, Using}
 
 class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskCommandOperator(operatorName, context, systemConfig, templateEngine) {
@@ -50,7 +49,7 @@ class EcsTaskEmbulkOperator(operatorName: String, context: OperatorContext, syst
       dup.set("ECS_TASK_EMBULK_SETUP_COMMAND", cmd)
     }
 
-    TryWithResource(classOf[EcsTaskEmbulkOperator].getResourceAsStream(runShResourcePath)) { is =>
+    Using.resource(classOf[EcsTaskEmbulkOperator].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
       templateEngine.template(runShContentTemplate, dup)
     }

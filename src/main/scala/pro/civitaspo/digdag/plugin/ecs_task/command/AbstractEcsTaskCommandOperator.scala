@@ -4,10 +4,9 @@ import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, PrivilegedVariables, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
-import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.jdk.CollectionConverters._
-import scala.util.Random
+import scala.util.{Random, Using}
 import scala.util.matching.Regex
 
 abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
@@ -88,7 +87,7 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
   protected def prepare(tmpStorage: TmpStorage): Unit
 
   def runTask(): TaskResult = {
-    TryWithResource(buildTmpStorage()) { tmpStorage: TmpStorage =>
+    Using.resource(buildTmpStorage()) { tmpStorage: TmpStorage =>
       prepare(tmpStorage)
       createCommandRunner(tmpStorage).run()
     }

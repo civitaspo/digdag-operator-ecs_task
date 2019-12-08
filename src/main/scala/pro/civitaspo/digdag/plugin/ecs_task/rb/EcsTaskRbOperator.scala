@@ -3,10 +3,10 @@ import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.command.{AbstractEcsTaskCommandOperator, TmpStorage}
-import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
 import scala.jdk.CollectionConverters._
 import scala.io.Source
+import scala.util.Using
 
 class EcsTaskRbOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskCommandOperator(operatorName, context, systemConfig, templateEngine) {
@@ -32,7 +32,7 @@ class EcsTaskRbOperator(operatorName: String, context: OperatorContext, systemCo
   }
 
   protected def createRunnerRbContent(): String = {
-    TryWithResource(classOf[EcsTaskRbOperator].getResourceAsStream(runnerRbResourcePath)) { is =>
+    Using.resource(classOf[EcsTaskRbOperator].getResourceAsStream(runnerRbResourcePath)) { is =>
       Source.fromInputStream(is).mkString
     }
   }
@@ -51,7 +51,7 @@ class EcsTaskRbOperator(operatorName: String, context: OperatorContext, systemCo
       dup.set("ECS_TASK_RB_SETUP_COMMAND", cmd)
     }
 
-    TryWithResource(classOf[EcsTaskRbOperator].getResourceAsStream(runShResourcePath)) { is =>
+    Using.resource(classOf[EcsTaskRbOperator].getResourceAsStream(runShResourcePath)) { is =>
       val runShContentTemplate: String = Source.fromInputStream(is).mkString
       templateEngine.template(runShContentTemplate, dup)
     }
