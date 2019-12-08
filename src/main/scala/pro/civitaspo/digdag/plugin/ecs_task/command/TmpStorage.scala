@@ -9,7 +9,7 @@ trait TmpStorage extends AutoCloseable {
 
   def getLocation: String
 
-  def stageFile(fileName: String, content: String)
+  def stageFile(fileName: String, content: String): Unit
 
   def stageWorkspace(): Unit
 
