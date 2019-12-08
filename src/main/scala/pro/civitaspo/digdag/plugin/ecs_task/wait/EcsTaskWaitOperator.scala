@@ -6,7 +6,7 @@ import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
 import io.digdag.util.DurationParam
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {

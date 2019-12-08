@@ -20,7 +20,7 @@ import io.digdag.util.DurationParam
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.exception.RetryTimeoutException
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {

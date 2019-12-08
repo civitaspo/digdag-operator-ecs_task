@@ -30,7 +30,7 @@ import io.digdag.client.config.{Config, ConfigKey}
 import io.digdag.spi.{ImmutableTaskResult, OperatorContext, TaskResult, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {

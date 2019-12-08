@@ -9,7 +9,7 @@ import org.slf4j.Logger
 import pro.civitaspo.digdag.plugin.ecs_task.aws.Aws
 import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 case class S3TmpStorage(shellCommand: String, location: AmazonS3URI, aws: Aws, workspace: Workspace, logger: Logger) extends TmpStorage {

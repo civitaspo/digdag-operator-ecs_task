@@ -6,7 +6,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.AbstractEcsTaskOperator
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 import scala.util.matching.Regex
 

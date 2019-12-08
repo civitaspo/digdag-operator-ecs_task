@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import pro.civitaspo.digdag.plugin.ecs_task.VERSION
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AwsConf
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 import scala.util.matching.Regex
 

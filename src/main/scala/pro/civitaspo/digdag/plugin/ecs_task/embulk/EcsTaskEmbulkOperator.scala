@@ -8,7 +8,7 @@ import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper
 import pro.civitaspo.digdag.plugin.ecs_task.command.{AbstractEcsTaskCommandOperator, TmpStorage}
 import pro.civitaspo.digdag.plugin.ecs_task.util.TryWithResource
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Source
 import scala.util.Try
 
