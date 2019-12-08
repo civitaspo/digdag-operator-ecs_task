@@ -53,7 +53,17 @@ publishing {
     }
     repositories {
         maven {
-            url "$buildDir/repo"
+            if (System.getenv("GITHUB_TOKEN")) {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/civitaspo/digdag-operator-ecs_task")
+                credentials {
+                    username = "civitaspo"
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+            else {
+                url "$buildDir/repo"
+            }
         }
     }
 }
