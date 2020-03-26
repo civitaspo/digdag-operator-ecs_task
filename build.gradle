@@ -2,7 +2,7 @@ plugins {
     id 'scala'
     id 'maven-publish'
     id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id "com.diffplug.gradle.spotless" version "3.13.0"
+    id "com.diffplug.gradle.spotless" version "3.27.1"
 }
 
 group = 'pro.civitaspo'
