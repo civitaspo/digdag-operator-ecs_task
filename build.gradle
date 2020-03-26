@@ -70,9 +70,10 @@ publishing {
 
 spotless {
     scala {
-        scalafmt('1.5.1').configFile('.scalafmt.conf')
+        scalafmt('2.3.2').configFile('.scalafmt.conf')
     }
 }
+
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
