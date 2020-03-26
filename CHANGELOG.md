@@ -1,3 +1,16 @@
+0.1.0 (2019-12-08)
+==================
+* [Enhancement] Update dependencies (digdag 0.9.31 -> 0.9.41, scala 2.12.6 -> 2.13.1, aws-sdk 1.11.451 -> 1.11.751)
+* [Enhancement] Add test dependencies
+* [Enhancement] Apply Scala 2.13 style
+* [Enhancement] Use `scala.jdk.CollectionConverters._` instead of `scala.collection.JavaConverters._`
+* [Enhancement] Fix deprecations by Scala 2.13
+* [Enhancement] Use Using.resource instead of TryWithResource
+* [New Feature] Use Github Actions instead of CircleCI
+* [New Feature] Release to Github Packages when tagging
+* [Enhancement] Update spotless 3.13.0 -> 3.27.1
+* [Enhancement] Update scalafmt 1.5.1 -> 2.3.2
+
 0.0.14 (2019-11-24)
 ===================
 * [Enhancement] Add `shell` option to change the shell command that the operator uses internally.
