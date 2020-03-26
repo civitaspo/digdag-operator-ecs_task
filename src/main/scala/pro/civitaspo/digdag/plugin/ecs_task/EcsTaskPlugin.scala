@@ -46,7 +46,8 @@ object EcsTaskPlugin {
           val constructor: Constructor[T] = klass.getConstructor(classOf[String], classOf[OperatorContext], classOf[Config], classOf[TemplateEngine])
           try {
             constructor.newInstance(operatorName, context, systemConfig, templateEngine)
-          } catch {
+          }
+          catch {
             case e: Throwable => throw new ConfigException(e)
           }
         }
@@ -56,6 +57,7 @@ object EcsTaskPlugin {
 }
 
 class EcsTaskPlugin extends Plugin {
+
   override def getServiceProvider[T](`type`: Class[T]): Class[_ <: T] = {
     if (`type` ne classOf[OperatorProvider]) return null
     classOf[EcsTaskPlugin.EcsTaskOperatorProvider].asSubclass(`type`)

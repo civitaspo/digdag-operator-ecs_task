@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.py
+
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}
 import pro.civitaspo.digdag.plugin.ecs_task.aws.AmazonS3UriWrapper

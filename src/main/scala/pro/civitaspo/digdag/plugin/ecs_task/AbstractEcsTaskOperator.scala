@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task
+
 import io.digdag.client.config.{Config, ConfigFactory}
 import io.digdag.spi.{OperatorContext, SecretProvider, TemplateEngine}
 import io.digdag.util.{BaseOperator, DurationParam}
@@ -10,6 +11,7 @@ abstract class AbstractEcsTaskOperator(operatorName: String, context: OperatorCo
 
   protected val logger: Logger = LoggerFactory.getLogger(operatorName)
   protected val cf: ConfigFactory = request.getConfig.getFactory
+
   protected val params: Config = {
     val elems: Seq[String] = operatorName.split("\\.").toSeq
     elems.indices.foldLeft(request.getConfig) { (p: Config, idx: Int) =>

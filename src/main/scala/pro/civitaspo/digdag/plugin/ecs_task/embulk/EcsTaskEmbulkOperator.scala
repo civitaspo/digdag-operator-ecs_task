@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.embulk
+
 import java.io.File
 import java.nio.charset.StandardCharsets.UTF_8
 

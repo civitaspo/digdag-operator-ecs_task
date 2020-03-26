@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
 import com.amazonaws.services.s3.AmazonS3URI
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, PrivilegedVariables, TaskResult, TemplateEngine}
@@ -38,7 +39,7 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
     val storageType: String = tmpStorageConfig.get("type", classOf[String])
     storageType match {
       case "s3" => buildS3TmpStorage()
-      case _ => throw new UnsupportedOperationException("tmp_storage.type supports only s3")
+      case _    => throw new UnsupportedOperationException("tmp_storage.type supports only s3")
     }
   }
 
@@ -69,7 +70,7 @@ abstract class AbstractEcsTaskCommandOperator(operatorName: String, context: Ope
   protected def isValidEnvKey(key: String): Boolean = {
     key match {
       case validEnvKeyRegex() => true
-      case _ => false
+      case _                  => false
     }
   }
 

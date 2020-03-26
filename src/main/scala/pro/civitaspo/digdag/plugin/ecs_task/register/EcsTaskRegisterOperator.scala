@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.register
+
 import com.amazonaws.services.ecs.model.{
   ContainerDefinition,
   Device,
@@ -53,7 +54,8 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get).toSeq
     val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
-    val tags: Seq[Tag] = c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map( (t: (String, String)) => new Tag().withKey(t._1).withValue(t._2)).toSeq
+    val tags: Seq[Tag] =
+      c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map((t: (String, String)) => new Tag().withKey(t._1).withValue(t._2)).toSeq
     val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
     val volumes: Seq[Volume] = c.parseListOrGetEmpty("volumes", classOf[Config]).asScala.map(configureVolume).map(_.get).toSeq
 
@@ -88,13 +90,13 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val environments: Seq[KeyValuePair] = c
       .getMapOrEmpty("environments", classOf[String], classOf[String])
       .asScala
-      .map((t: (String, String)) => new KeyValuePair().withName(t._1).withValue(t._2) )
+      .map((t: (String, String)) => new KeyValuePair().withName(t._1).withValue(t._2))
       .toSeq // TODO: doc
     val essential: Optional[Boolean] = c.getOptional("essential", classOf[Boolean])
     val extraHosts: Seq[HostEntry] = c
       .getMapOrEmpty("extra_hosts", classOf[String], classOf[String])
       .asScala
-      .map((t: (String, String)) =>  new HostEntry().withHostname(t._1).withIpAddress(t._2) )
+      .map((t: (String, String)) => new HostEntry().withHostname(t._1).withIpAddress(t._2))
       .toSeq // TODO: doc
     val healthCheck: Optional[HealthCheck] = configureHealthCheck(c.parseNestedOrGetEmpty("health_check"))
     val hostname: Optional[String] = c.getOptional("hostname", classOf[String])

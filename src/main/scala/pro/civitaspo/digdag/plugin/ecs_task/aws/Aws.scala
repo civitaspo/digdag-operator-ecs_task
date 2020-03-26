@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.aws
+
 import com.amazonaws.{ClientConfiguration, Protocol}
 import com.amazonaws.auth.{
   AnonymousAWSCredentials,
@@ -77,13 +78,13 @@ case class Aws(conf: AwsConf) {
 
   private def standardCredentialsProvider: AWSCredentialsProvider = {
     conf.authMethod match {
-      case "basic" => basicAuthMethodAWSCredentialsProvider
-      case "env" => envAuthMethodAWSCredentialsProvider
-      case "instance" => instanceAuthMethodAWSCredentialsProvider
-      case "profile" => profileAuthMethodAWSCredentialsProvider
+      case "basic"      => basicAuthMethodAWSCredentialsProvider
+      case "env"        => envAuthMethodAWSCredentialsProvider
+      case "instance"   => instanceAuthMethodAWSCredentialsProvider
+      case "profile"    => profileAuthMethodAWSCredentialsProvider
       case "properties" => propertiesAuthMethodAWSCredentialsProvider
-      case "anonymous" => anonymousAuthMethodAWSCredentialsProvider
-      case "session" => sessionAuthMethodAWSCredentialsProvider
+      case "anonymous"  => anonymousAuthMethodAWSCredentialsProvider
+      case "session"    => sessionAuthMethodAWSCredentialsProvider
       case _ =>
         throw new ConfigException(
           s"""auth_method: "$conf.authMethod" is not supported. available `auth_method`s are "basic", "env", "instance", "profile", "properties", "anonymous", or "session"."""
@@ -159,9 +160,9 @@ case class Aws(conf: AwsConf) {
     val host: String = conf.httpProxy.getSecret("host")
     val port: Optional[String] = conf.httpProxy.getSecretOptional("port")
     val protocol: Protocol = conf.httpProxy.getSecretOptional("scheme").or("https") match {
-      case "http" => Protocol.HTTP
+      case "http"  => Protocol.HTTP
       case "https" => Protocol.HTTPS
-      case _ => throw new ConfigException(s"""`athena.http_proxy.scheme` must be "http" or "https".""")
+      case _       => throw new ConfigException(s"""`athena.http_proxy.scheme` must be "http" or "https".""")
     }
     val user: Optional[String] = conf.httpProxy.getSecretOptional("user")
     val password: Optional[String] = conf.httpProxy.getSecretOptional("password")

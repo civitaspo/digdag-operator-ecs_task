@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
 import com.amazonaws.services.s3.AmazonS3URI
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}
@@ -52,7 +53,7 @@ class EcsTaskCommandResultInternalOperator(operatorName: String, context: Operat
     }
     t match {
       case Failure(exception) => logger.error(exception.getMessage, exception)
-      case _ => // do nothing
+      case _                  => // do nothing
     }
   }
 

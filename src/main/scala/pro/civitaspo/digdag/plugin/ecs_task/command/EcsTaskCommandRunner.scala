@@ -15,12 +15,12 @@ import scala.util.hashing.MurmurHash3
 import scala.util.matching.Regex
 
 case class EcsTaskCommandRunner(
-  tmpStorage: TmpStorage,
-  mainScript: String,
-  params: Config,
-  environments: Map[String, String],
-  awsConf: AwsConf,
-  logger: Logger
+    tmpStorage: TmpStorage,
+    mainScript: String,
+    params: Config,
+    environments: Map[String, String],
+    awsConf: AwsConf,
+    logger: Logger
 ) {
 
   val cf: ConfigFactory = params.getFactory
@@ -67,9 +67,11 @@ case class EcsTaskCommandRunner(
   val memory: Optional[String] = params.getOptional("memory", classOf[String])
   val networkMode: Optional[String] = params.getOptional("network_mode", classOf[String])
   val pidMode: Optional[String] = params.getOptional("pid_mode", classOf[String])
+
   // NOTE: Use `ecs_task.run>`'s one.
   // val placementConstraints: Seq[TaskDefinitionPlacementConstraint] = params.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
-  val requiresCompatibilities: Seq[String] = params.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
+  val requiresCompatibilities
+      : Seq[String] = params.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
   // NOTE: Use the same var as `ecs_task.run>`'s one.
   // val tags: Optional[Config] = params.getOptionalNested("tags")
   val taskRoleArn: Optional[String] = params.getOptional("task_role_arn", classOf[String])

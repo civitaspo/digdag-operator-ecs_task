@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.run
+
 import com.google.common.base.Optional
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TaskResult, TemplateEngine}

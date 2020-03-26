@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.util
+
 import java.nio.file.{Files, Path}
 
 import io.digdag.util.Workspace

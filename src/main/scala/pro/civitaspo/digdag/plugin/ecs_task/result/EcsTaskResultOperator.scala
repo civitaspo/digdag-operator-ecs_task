@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.result
+
 import java.io.File
 
 import com.amazonaws.services.s3.AmazonS3URI
