@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
@@ -24,7 +25,7 @@ case class S3TmpStorage(shellCommand: String, location: AmazonS3URI, aws: Aws, w
 
   private def writeFile(file: Path, content: String): Unit = {
     logger.info(s"Write into ${file.toString}")
-      Using.resource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
+    Using.resource(workspace.newBufferedWriter(file.toString, UTF_8)) { writer =>
       writer.write(content)
     }
   }

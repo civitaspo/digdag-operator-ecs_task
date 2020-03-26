@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.command
+
 import io.digdag.util.Workspace
 
 trait TmpStorage extends AutoCloseable {

@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.sh
+
 import com.fasterxml.jackson.databind.JsonNode
 import io.digdag.client.config.Config
 import io.digdag.spi.{OperatorContext, TemplateEngine}

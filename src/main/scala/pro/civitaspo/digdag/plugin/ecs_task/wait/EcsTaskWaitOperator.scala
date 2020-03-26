@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.wait
+
 import com.amazonaws.services.ecs.model.{DescribeTasksRequest, DescribeTasksResult, Failure, StopTaskRequest}
 import com.google.common.base.Throwables
 import io.digdag.client.config.Config
@@ -30,7 +31,8 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
         EcsTaskWaiter(logger = logger, ecs = ecs, timeout = timeout, condition = condition, status = status, pollingStrategy = pollingStrategy)
       try {
         waiter.wait(req)
-      } catch {
+      }
+      catch {
         case e: Throwable =>
           logger.warn(s"Stop tasks: tasks=[${tasks.mkString(",")}] reason=${e.getMessage}")
           tasks.foreach { t =>
@@ -40,7 +42,8 @@ class EcsTaskWaitOperator(operatorName: String, context: OperatorContext, system
             }
           }
           throw Throwables.propagate(e)
-      } finally {
+      }
+      finally {
         waiter.shutdown()
       }
     }

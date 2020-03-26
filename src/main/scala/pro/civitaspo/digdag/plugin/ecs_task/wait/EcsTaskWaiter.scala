@@ -1,4 +1,5 @@
 package pro.civitaspo.digdag.plugin.ecs_task.wait
+
 import java.util.concurrent.{ExecutorService, Executors}
 
 import com.amazonaws.services.ecs.AmazonECS
@@ -13,13 +14,13 @@ import org.slf4j.Logger
 import scala.jdk.CollectionConverters._
 
 case class EcsTaskWaiter(
-  logger: Logger,
-  ecs: AmazonECS,
-  executorService: ExecutorService = Executors.newFixedThreadPool(50),
-  timeout: DurationParam,
-  condition: String,
-  status: String,
-  pollingStrategy: Config
+    logger: Logger,
+    ecs: AmazonECS,
+    executorService: ExecutorService = Executors.newFixedThreadPool(50),
+    timeout: DurationParam,
+    condition: String,
+    status: String,
+    pollingStrategy: Config
 ) {
 
   sealed trait IntervalType {
@@ -83,7 +84,7 @@ case class EcsTaskWaiter(
         condition match {
           case "all" => output.getTasks.asScala.forall(t => t.getLastStatus.equals(status))
           case "any" => output.getTasks.asScala.exists(t => t.getLastStatus.equals(status))
-          case _ => throw new ConfigException(s"condition: $condition is unsupported.")
+          case _     => throw new ConfigException(s"condition: $condition is unsupported.")
         }
       }
       override def getState: WaiterState = WaiterState.SUCCESS
