@@ -155,7 +155,10 @@ Define the below options on properties (which is indicated by `-c`, `--config`).
 - **ecs_task.allow_auth_method_instance**: Indicates whether users can use **auth_method** `"instance"` (boolean, default: `false`)
 - **ecs_task.allow_auth_method_profile**: Indicates whether users can use **auth_method** `"profile"` (boolean, default: `false`)
 - **ecs_task.allow_auth_method_properties**: Indicates whether users can use **auth_method** `"properties"` (boolean, default: `false`)
+- **ecs_task.allow_auth_method_web_identity_token**: Indicates whether users can use **auth_method** `"web_identity_token"` (boolean, default: `false`)
 - **ecs_task.assume_role_timeout_duration**: Maximum duration which server administer allows when users assume **role_arn**. (`DurationParam`, default: `1h`)
+- **ecs_task.default_web_identity_token_file**: Path to a web identity token file. (string, optional)
+- **ecs_task.default_web_identity_role_arn**: AWS Role when using a web identity token. (string, optional)
 
 ### Secrets
 
@@ -182,6 +185,9 @@ Define the below options on properties (which is indicated by `-c`, `--config`).
   - `"properties"`: uses aws.accessKeyId and aws.secretKey Java system properties.
   - `"anonymous"`: uses anonymous access. This auth method can access only public files.
   - `"session"`: uses temporary-generated access_key_id, secret_access_key and session_token.
+  - `"web_identity_token"`: uses web identity token.
+    - **web_identity_token_file**: path to a web identity token file. (string, default: given by **ecs_task.default_web_identity_token_file**)
+    - **web_identity_role_arn**:  aws role arn when using a web identity token. (string, default: given by **ecs_task.default_web_identity_role_arn**)
 - **use_http_proxy**: Indicate whether using when accessing AWS via http proxy. (boolean, default: `false`)
 - **region**: The AWS region. (string, optional)
 - **endpoint**: The AWS Service endpoint. (string, optional)
