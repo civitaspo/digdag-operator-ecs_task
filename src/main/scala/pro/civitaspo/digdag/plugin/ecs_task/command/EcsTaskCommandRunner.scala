@@ -101,6 +101,7 @@ case class EcsTaskCommandRunner(
   val links: Seq[String] = params.parseListOrGetEmpty("links", classOf[String]).asScala.toSeq
   val linuxParameters: Optional[Config] = params.getOptionalNested("linux_parameters")
   val logConfiguration: Optional[Config] = params.getOptionalNested("log_configuration")
+  val firelensConfiguration: Optional[Config] = params.getOptionalNested("firelens_configuration") 
   // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val memory: Optional[Int] = params.getOptional("memory", classOf[Int])
   // NOTE: If you set it by container level, use the `overrides` option.
@@ -260,6 +261,7 @@ case class EcsTaskCommandRunner(
     c.set("links", links.asJava)
     c.setOptional("linux_parameters", linuxParameters)
     c.setOptional("log_configuration", logConfiguration)
+    c.setOptional("firelens_configuration", firelensConfiguration)
     c.set("mount_points", mountPoints.asJava)
     c.set("name", containerName.or(normalizedFamily))
     c.set("port_mappings", portMappings.asJava)
