@@ -142,6 +142,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (links.nonEmpty) cd.setLinks(links.asJava)
     if (linuxParameters.isPresent) cd.setLinuxParameters(linuxParameters.get)
     if (logConfiguration.isPresent) cd.setLogConfiguration(logConfiguration.get)
+    if (firelensConfiguration.isPresent) cd.setFirelensConfiguration(firelensConfiguration.get)
     if (memory.isPresent) cd.setMemory(memory.get)
     if (memoryReservation.isPresent) cd.setMemoryReservation(memoryReservation.get)
     if (mountPoints.nonEmpty) cd.setMountPoints(mountPoints.asJava)
