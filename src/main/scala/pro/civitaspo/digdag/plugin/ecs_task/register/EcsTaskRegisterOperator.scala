@@ -11,6 +11,7 @@ import com.amazonaws.services.ecs.model.{
   KeyValuePair,
   LinuxParameters,
   LogConfiguration,
+  FirelensConfiguration,
   MountPoint,
   PortMapping,
   RegisterTaskDefinitionRequest,
@@ -105,6 +106,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val links: Seq[String] = c.parseListOrGetEmpty("links", classOf[String]).asScala.toSeq
     val linuxParameters: Optional[LinuxParameters] = configureLinuxParameters(c.parseNestedOrGetEmpty("linux_parameters"))
     val logConfiguration: Optional[LogConfiguration] = configureLogConfiguration(c.parseNestedOrGetEmpty("log_configuration"))
+    val firelensConfiguration: Optional[FirelensConfiguration] = configureFirelensConfiguration(c.parseNestedOrGetEmpty("firelens_configuration")) 
     val memory: Optional[Int] = c.getOptional("memory", classOf[Int])
     val memoryReservation: Optional[Int] = c.getOptional("memory_reservation", classOf[Int])
     val mountPoints: Seq[MountPoint] = c.parseListOrGetEmpty("mount_points", classOf[Config]).asScala.map(configureMountPoint).map(_.get).toSeq
@@ -140,6 +142,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (links.nonEmpty) cd.setLinks(links.asJava)
     if (linuxParameters.isPresent) cd.setLinuxParameters(linuxParameters.get)
     if (logConfiguration.isPresent) cd.setLogConfiguration(logConfiguration.get)
+    if (firelensConfiguration.isPresent) cd.setFirelensConfiguration(firelensConfiguration.get)
     if (memory.isPresent) cd.setMemory(memory.get)
     if (memoryReservation.isPresent) cd.setMemoryReservation(memoryReservation.get)
     if (mountPoints.nonEmpty) cd.setMountPoints(mountPoints.asJava)
@@ -243,7 +246,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureLogConfiguration(c: Config): Optional[LogConfiguration] = {
     if (c.isEmpty) return Optional.absent()
 
-    val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk
+    val logDriver: String = c.get("log_driver", classOf[String]) // Valid Values: json-file | syslog | journald | gelf | fluentd | awslogs | splunk | awsfirelens
     val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
 
     val lc: LogConfiguration = new LogConfiguration()
@@ -251,6 +254,19 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (options.nonEmpty) lc.setOptions(options.asJava)
 
     Optional.of(lc)
+  }
+
+  protected def configureFirelensConfiguration(c: Config): Optional[FirelensConfiguration] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val firelensType: String = c.get("type", classOf[String]) // Valid Values: fluentd | fluentbit
+    val options: Map[String, String] = c.getMapOrEmpty("options", classOf[String], classOf[String]).asScala.toMap
+
+    val fc: FirelensConfiguration = new FirelensConfiguration()
+    fc.setType(firelensType)
+    if (options.nonEmpty) fc.setOptions(options.asJava)
+
+    Optional.of(fc)
   }
 
   protected def configureMountPoint(c: Config): Optional[MountPoint] = {
