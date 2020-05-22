@@ -1,3 +1,7 @@
+0.1.1 (2020-05-22)
+==================
+* [New Feature] [#71](https://github.com/civitaspo/digdag-operator-ecs_task/pull/71) Support a new log driver: `awsfirelens`.
+
 0.1.0 (2019-12-08)
 ==================
 * [Enhancement] Update dependencies (digdag 0.9.31 -> 0.9.41, scala 2.12.6 -> 2.13.1, aws-sdk 1.11.451 -> 1.11.751)
