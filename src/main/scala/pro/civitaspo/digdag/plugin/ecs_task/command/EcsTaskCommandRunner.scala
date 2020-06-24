@@ -121,6 +121,7 @@ case class EcsTaskCommandRunner(
   val workingDirectory: Optional[String] = params.getOptional("working_directory", classOf[String])
 
   // For ecs_task.run operator
+  val capacityProviderStrategy: Seq[Config] = params.parseListOrGetEmpty("capacity_provider_strategy", classOf[Config]).asScala.toSeq
   val cluster: String = params.get("cluster", classOf[String])
   val count: Optional[Int] = params.getOptional("count", classOf[Int])
   val group: Optional[String] = params.getOptional("group", classOf[String])
@@ -175,6 +176,7 @@ case class EcsTaskCommandRunner(
   protected def ecsTaskRunInternalSubTask(): Config = {
     withDefaultSubTask { subTask =>
       subTask.set("_type", "ecs_task.run_internal")
+      subTask.set("capacityProviderStrategy", capacityProviderStrategy.asJava)
       subTask.set("cluster", cluster)
       subTask.setOptional("count", count)
       subTask.setOptional("group", group)

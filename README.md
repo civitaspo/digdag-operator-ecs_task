@@ -289,6 +289,8 @@ In addition, the below configurations exist.
 - **volumes_from**: Data volumes to mount from another container. (array of map, optional)
     - The configuration map is the same as the snake-cased [API_VolumeFrom](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_VolumeFrom.html)
 - **working_directory**: The working directory in which to run commands inside the container. (string, optional)
+- **capacity_provider_strategy**: An array of capacity provider strategy items to control capacity providers. (array of map, optional)
+    - The configuration map is the same as the snake-cased [API CapacityProviderStrategyItem](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_CapacityProviderStrategyItem.html)
 - **cluster**: The short name or full Amazon Resource Name (ARN) of the cluster on which to run your task. (string, required)
 - **count**: The number of instantiations of the specified task to place on your cluster. You can specify up to 10 tasks per call. (integer, optional)
 - **group**: The name of the task group to associate with the task. The default value is the family name of the task definition (for example, family:my-family-name). (string, optional)

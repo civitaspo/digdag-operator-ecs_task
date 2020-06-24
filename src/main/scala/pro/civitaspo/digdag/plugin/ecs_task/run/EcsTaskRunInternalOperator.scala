@@ -2,6 +2,7 @@ package pro.civitaspo.digdag.plugin.ecs_task.run
 
 import com.amazonaws.services.ecs.model.{
   AwsVpcConfiguration,
+  CapacityProviderStrategyItem,
   ContainerOverride,
   Failure,
   KeyValuePair,
@@ -26,6 +27,8 @@ import scala.jdk.CollectionConverters._
 class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext, systemConfig: Config, templateEngine: TemplateEngine)
     extends AbstractEcsTaskOperator(operatorName, context, systemConfig, templateEngine) {
 
+  val capacityProviderStrategy: Seq[CapacityProviderStrategyItem] =
+    params.parseListOrGetEmpty("capacity_provider_strategy", classOf[Config]).asScala.map(configureCapacityProviderStrategy).map(_.get).toSeq
   val cluster: String = params.get("cluster", classOf[String])
   val count: Optional[Int] = params.getOptional("count", classOf[Int])
   val group: Optional[String] = params.getOptional("group", classOf[String])
@@ -51,6 +54,7 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
   protected def buildRunTaskRequest(): RunTaskRequest = {
     val req: RunTaskRequest = new RunTaskRequest()
 
+    if (capacityProviderStrategy.nonEmpty) req.setCapacityProviderStrategy(capacityProviderStrategy.asJava)
     req.setCluster(cluster)
     if (count.isPresent) req.setCount(count.get)
     if (group.isPresent) req.setGroup(group.get)
@@ -65,6 +69,21 @@ class EcsTaskRunInternalOperator(operatorName: String, context: OperatorContext,
     req.setTaskDefinition(taskDefinition)
 
     req
+  }
+
+  protected def configureCapacityProviderStrategy(c: Config): Optional[CapacityProviderStrategyItem] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val base: Optional[Int] = c.getOptional("base", classOf[Int])
+    val capacityProvider: Optional[String] = c.getOptional("capacity_provider", classOf[String])
+    val weight: Optional[Int] = c.getOptional("weight", classOf[Int])
+
+    val cps: CapacityProviderStrategyItem = new CapacityProviderStrategyItem()
+    if (base.isPresent) cps.setBase(base.get)
+    if (capacityProvider.isPresent) cps.setCapacityProvider(capacityProvider.get)
+    if (weight.isPresent) cps.setWeight(weight.get)
+
+    Optional.of(cps)
   }
 
   protected def configureNetworkConfiguration(c: Config): Optional[NetworkConfiguration] = {
