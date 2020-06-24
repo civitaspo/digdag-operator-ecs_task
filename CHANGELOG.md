@@ -1,3 +1,7 @@
+0.1.2 (2020/06/25)
+==================
+* [New Feature] [#75](https://github.com/civitaspo/digdag-operator-ecs_task/pull/75) Supports CapacityProvider.
+
 0.1.1 (2020-05-22)
 ==================
 * [New Feature] [#71](https://github.com/civitaspo/digdag-operator-ecs_task/pull/71) Support a new log driver: `awsfirelens`.
