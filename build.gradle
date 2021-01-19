@@ -29,7 +29,7 @@ dependencies {
 
     ['ecs', 's3', 'sts'].each { svc ->
         // https://mvnrepository.com/artifact/com.amazonaws/
-        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.751'
+        compile group: 'com.amazonaws', name: "aws-java-sdk-${svc}", version: '1.11.930'
     }
 
     testCompile group: 'org.scalatest', name: "scalatest_$depScalaVersion", version: '3.0.8'
