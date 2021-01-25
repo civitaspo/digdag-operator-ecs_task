@@ -4,6 +4,8 @@ import com.amazonaws.services.ecs.model.{
   ContainerDefinition,
   Device,
   DockerVolumeConfiguration,
+  EFSVolumeConfiguration,
+  EFSAuthorizationConfig,
   HealthCheck,
   HostEntry,
   HostVolumeProperties,
@@ -384,11 +386,15 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val dockerVolumeConfiguration: Optional[DockerVolumeConfiguration] = configureDockerVolumeConfiguration(
       c.parseNestedOrGetEmpty("docker_volume_configuration")
     )
+    val efsVolumeConfiguration: Optional[EFSVolumeConfiguration] = configureEFSVolumeConfiguration(
+      c.parseNestedOrGetEmpty("efs_volume_configuration")
+    )
     val host: Optional[HostVolumeProperties] = configureHostVolumeProperties(c.parseNestedOrGetEmpty("host"))
     val name: Optional[String] = c.getOptional("name", classOf[String])
 
     val v: Volume = new Volume()
     if (dockerVolumeConfiguration.isPresent) v.setDockerVolumeConfiguration(dockerVolumeConfiguration.get)
+    if (efsVolumeConfiguration.isPresent) v.setEfsVolumeConfiguration(efsVolumeConfiguration.get)
     if (host.isPresent) v.setHost(host.get)
     if (name.isPresent) v.setName(name.get)
 
@@ -412,6 +418,38 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (scope.isPresent) dvc.setScope(scope.get)
 
     Optional.of(dvc)
+  }
+
+  protected def configureEFSAuthorizationConfig(c: Config): Optional[EFSAuthorizationConfig] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val accessPointId: Optional[String] = c.getOptional("access_point_id", classOf[String])
+    val iam: Optional[String] = c.getOptional("iam", classOf[String])
+
+    val eac: EFSAuthorizationConfig = new EFSAuthorizationConfig()
+    if (accessPointId.isPresent) eac.setAccessPointId(accessPointId.get)
+    if (iam.isPresent) eac.setIam(iam.get)
+
+    Optional.of(eac)
+  }
+
+  protected def configureEFSVolumeConfiguration(c: Config): Optional[EFSVolumeConfiguration] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val authorizationConfig: Optional[EFSAuthorizationConfig] = configureEFSAuthorizationConfig(c.parseNestedOrGetEmpty("authorization_config"))
+    val fileSystemId: String = c.get("file_system_id", classOf[String])
+    val rootDirectory: Optional[String] = c.getOptional("root_directory", classOf[String])
+    val transitEncryption: Optional[String] = c.getOptional("transit_encryption", classOf[String])
+    val transitEncryptionPort: Optional[Int] = c.getOptional("transit_encryption_port", classOf[Int])
+
+    val evc: EFSVolumeConfiguration = new EFSVolumeConfiguration()
+    if (authorizationConfig.isPresent) evc.setAuthorizationConfig(authorizationConfig.get)
+    evc.setFileSystemId(fileSystemId)
+    if (rootDirectory.isPresent) evc.setRootDirectory(rootDirectory.get)
+    if (transitEncryption.isPresent) evc.setTransitEncryption(transitEncryption.get)
+    if (transitEncryptionPort.isPresent) evc.setTransitEncryptionPort(transitEncryptionPort.get)
+
+    Optional.of(evc)
   }
 
   protected def configureHostVolumeProperties(c: Config): Optional[HostVolumeProperties] = {
