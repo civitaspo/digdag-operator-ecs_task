@@ -1,3 +1,7 @@
+0.1.3 (2021/01/25)
+==================
+* [New Feature] [#77](https://github.com/civitaspo/digdag-operator-ecs_task/pull/77) Add support for EFS volume configuration.
+
 0.1.2 (2020/06/25)
 ==================
 * [New Feature] [#75](https://github.com/civitaspo/digdag-operator-ecs_task/pull/75) Supports CapacityProvider.
