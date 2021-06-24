@@ -82,6 +82,7 @@ case class EcsTaskCommandRunner(
   // val command: Seq[String] = params.parseListOrGetEmpty("command", classOf[String]).asScala
   // NOTE: Set in `ecs_task.register>` TaskDefinition Context. If you set it by container level, use the `overrides` option.
   // val cpu: Optional[Int] = params.getOptional("cpu", classOf[Int])
+  val dependsOn: Seq[Config] = params.parseListOrGetEmpty("depends_on", classOf[Config]).asScala.toSeq
   val disableNetworking: Optional[Boolean] = params.getOptional("disable_networking", classOf[Boolean])
   val dnsSearchDomains: Seq[String] = params.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala.toSeq
   val dnsServers: Seq[String] = params.parseListOrGetEmpty("dns_servers", classOf[String]).asScala.toSeq
@@ -248,6 +249,7 @@ case class EcsTaskCommandRunner(
     val command: Seq[String] = tmpStorage.buildTaskCommand(mainScript)
     logger.info(s"Run in the container: ${command.mkString(" ")}")
     c.set("command", command.asJava)
+    c.set("depends_on", dependsOn.asJava)
     c.setOptional("disable_networking", disableNetworking)
     c.set("dns_search_domains", dnsSearchDomains.asJava)
     c.set("dns_servers", dnsServers.asJava)

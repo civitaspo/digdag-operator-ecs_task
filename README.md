@@ -254,6 +254,8 @@ In addition, the below configurations exist.
 - **task_role_arn**: The short name or full Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role. (string, optional)
 - **volumes**: A list of volume definitions. (array of map, optional)
     - The configuration map is the same as the snake-cased [API_Volume](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Volume.html).
+- **depends_on**: The dependencies defined for container startup and shutdown. A container can contain multiple dependencies. When a dependency is defined for container startup, for container shutdown it is reversed. For more informaiton, see [ECS-Type-ContainerDefinition-dependsOn](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-dependsOn). (array of map, optional)
+    - The configuration map is the same as the snake-cased [API_ContainerDependency](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDependency.html).
 - **disable_networking**: When this parameter is `true`, networking is disabled within the container. (boolean, optional)
 - **dns_search_domains**: A list of DNS search domains that are presented to the container. (array of string, optional)
 - **dns_servers**: A list of DNS servers that are presented to the container. (array of string, optional)
