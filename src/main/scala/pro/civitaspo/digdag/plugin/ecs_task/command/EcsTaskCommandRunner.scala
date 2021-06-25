@@ -33,6 +33,7 @@ case class EcsTaskCommandRunner(
   // val containerDefinitions: Seq[ContainerDefinition] = params.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get)
   val sidecars: Seq[Config] = params.parseListOrGetEmpty("sidecars", classOf[Config]).asScala.toSeq
   val cpu: Optional[String] = params.getOptional("cpu", classOf[String])
+  val ephemeralStorage: Optional[Config] = params.getOptionalNested("ephemeral_storage")
   val executionRoleArn: Optional[String] = params.getOptional("execution_role_arn", classOf[String])
 
   val taskName: String = params.get("task_name", classOf[String])
@@ -228,6 +229,7 @@ case class EcsTaskCommandRunner(
 
     c.set("container_definitions", (Seq(containerDefinitionConfig()) ++ sidecars).asJava)
     c.setOptional("cpu", cpu)
+    c.setOptional("ephemeral_storage", ephemeralStorage)
     c.setOptional("execution_role_arn", executionRoleArn)
     c.set("family", normalizedFamily)
     c.setOptional("ipc_mode", ipcMode)
