@@ -8,16 +8,12 @@ plugins {
 group = 'pro.civitaspo'
 version = '0.1.3'
 
-def digdagVersion = '0.9.41'
+def digdagVersion = '0.9.42'
 def scalaSemanticVersion = "2.13.1"
 def depScalaVersion = "2.13"
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven {
-        url 'https://dl.bintray.com/digdag/maven'
-    }
 }
 
 dependencies {
