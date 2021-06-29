@@ -14,10 +14,6 @@ def depScalaVersion = "2.13"
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven {
-        url 'https://dl.bintray.com/digdag/maven'
-    }
 }
 
 dependencies {
