@@ -2,6 +2,7 @@ package pro.civitaspo.digdag.plugin.ecs_task.register
 
 import com.amazonaws.services.ecs.model.{
   ContainerDefinition,
+  DependsOn,
   Device,
   DockerVolumeConfiguration,
   EFSVolumeConfiguration,
@@ -84,6 +85,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
 
     val command: Seq[String] = c.parseListOrGetEmpty("command", classOf[String]).asScala.toSeq
     val cpu: Optional[Int] = c.getOptional("cpu", classOf[Int])
+    val dependsOn: Seq[DependsOn] = c.parseListOrGetEmpty("depends_on", classOf[Config]).asScala.map(configureDependsOn).map(_.get).toSeq
     val disableNetworking: Optional[Boolean] = c.getOptional("disable_networking", classOf[Boolean])
     val dnsSearchDomains: Seq[String] = c.parseListOrGetEmpty("dns_search_domains", classOf[String]).asScala.toSeq
     val dnsServers: Seq[String] = c.parseListOrGetEmpty("dns_servers", classOf[String]).asScala.toSeq
@@ -128,6 +130,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val cd: ContainerDefinition = new ContainerDefinition()
     cd.setCommand(command.asJava)
     if (cpu.isPresent) cd.setCpu(cpu.get)
+    if (dependsOn.nonEmpty) cd.setDependsOn(dependsOn.asJava)
     if (disableNetworking.isPresent) cd.setDisableNetworking(disableNetworking.get)
     if (dnsSearchDomains.nonEmpty) cd.setDnsSearchDomains(dnsSearchDomains.asJava)
     if (dnsServers.nonEmpty) cd.setDnsServers(dnsServers.asJava)
@@ -162,6 +165,19 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (workingDirectory.isPresent) cd.setWorkingDirectory(workingDirectory.get)
 
     Optional.of(cd)
+  }
+
+  protected def configureDependsOn(c: Config): Optional[DependsOn] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val containerName: Optional[String] = c.getOptional("container_name", classOf[String])
+    val condition: Optional[String] = c.getOptional("condition", classOf[String])
+
+    val do: DependsOn = new DependsOn()
+    if (containerName.isPresent) do.setContainerName(containerName.get)
+    if (condition.isPresent) do.setCondition(condition.get)
+
+    Optional.of(do)
   }
 
   protected def configureHealthCheck(c: Config): Optional[HealthCheck] = {
