@@ -7,6 +7,7 @@ import com.amazonaws.services.ecs.model.{
   DockerVolumeConfiguration,
   EFSVolumeConfiguration,
   EFSAuthorizationConfig,
+  EphemeralStorage,
   HealthCheck,
   HostEntry,
   HostVolumeProperties,
@@ -48,6 +49,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val containerDefinitions: Seq[ContainerDefinition] =
       c.parseList("container_definitions", classOf[Config]).asScala.map(configureContainerDefinition).map(_.get).toSeq
     val cpu: Optional[String] = c.getOptional("cpu", classOf[String])
+    val ephemeralStorage: Optional[EphemeralStorage] = configureEphemeralStorage(c.parseNestedOrGetEmpty("ephemeral_storage"))
     val executionRoleArn: Optional[String] = c.getOptional("execution_role_arn", classOf[String])
     val family: String = c.get("family", classOf[String])
     val ipcMode: Optional[String] = c.getOptional("ipc_mode", classOf[String])
@@ -65,6 +67,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
 
     req.setContainerDefinitions(containerDefinitions.asJava)
     if (cpu.isPresent) req.setCpu(cpu.get)
+    if (ephemeralStorage.isPresent) req.setEphemeralStorage(ephemeralStorage.get)
     if (executionRoleArn.isPresent) req.setExecutionRoleArn(executionRoleArn.get)
     req.setFamily(family)
     if (ipcMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support ipc_mode.")
@@ -167,6 +170,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     Optional.of(cd)
   }
 
+
   protected def configureDependsOn(c: Config): Optional[ContainerDependency] = {
     if (c.isEmpty) return Optional.absent()
 
@@ -178,6 +182,18 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (condition.isPresent) cd.setCondition(condition.get)
 
     Optional.of(cd)
+  }
+
+  protected def configureEphemeralStorage(c: Config): Optional[EphemeralStorage] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val sizeInGiB
+        : Int = c.get("size_in_gi_b", classOf[Int])
+
+    val es: EphemeralStorage = new EphemeralStorage()
+    es.setSizeInGiB(sizeInGiB)
+
+    Optional.of(es)
   }
 
   protected def configureHealthCheck(c: Config): Optional[HealthCheck] = {
