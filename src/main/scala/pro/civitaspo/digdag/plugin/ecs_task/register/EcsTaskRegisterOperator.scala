@@ -170,7 +170,6 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     Optional.of(cd)
   }
 
-
   protected def configureDependsOn(c: Config): Optional[ContainerDependency] = {
     if (c.isEmpty) return Optional.absent()
 
@@ -187,8 +186,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureEphemeralStorage(c: Config): Optional[EphemeralStorage] = {
     if (c.isEmpty) return Optional.absent()
 
-    val sizeInGiB
-        : Int = c.get("size_in_gi_b", classOf[Int])
+    val sizeInGiB: Int = c.get("size_in_gi_b", classOf[Int])
 
     val es: EphemeralStorage = new EphemeralStorage()
     es.setSizeInGiB(sizeInGiB)
