@@ -1,8 +1,14 @@
-0.1.3 (2021/01/25)
+0.1.4 (2021-07-27)
+==================
+* [New Feature] [#79](https://github.com/civitaspo/digdag-operator-ecs_task/pull/79) Support dependsOn. @shoot16625++
+* [New Feature] [#80](https://github.com/civitaspo/digdag-operator-ecs_task/pull/80) Support ephemeralStorage @shoot16625++
+* [Fix] [#81](https://github.com/civitaspo/digdag-operator-ecs_task/pull/81) Install from maven
+
+0.1.3 (2021-01-25)
 ==================
 * [New Feature] [#77](https://github.com/civitaspo/digdag-operator-ecs_task/pull/77) Add support for EFS volume configuration.
 
-0.1.2 (2020/06/25)
+0.1.2 (2020-06-25)
 ==================
 * [New Feature] [#75](https://github.com/civitaspo/digdag-operator-ecs_task/pull/75) Supports CapacityProvider.
 
