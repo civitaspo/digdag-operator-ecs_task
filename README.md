@@ -15,7 +15,7 @@ _export:
     repositories:
       - https://jitpack.io
     dependencies:
-      - pro.civitaspo:digdag-operator-ecs_task:0.1.3
+      - pro.civitaspo:digdag-operator-ecs_task:0.1.4
   ecs_task:
     auth_method: profile
     tmp_storage:
