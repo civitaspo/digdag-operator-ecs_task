@@ -13,6 +13,7 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
   val taskDef: Optional[Config] = params.getOptionalNested("def")
   val resultS3Uri: Optional[String] = params.getOptional("result_s3_uri", classOf[String])
   val timeout: DurationParam = params.get("timeout", classOf[DurationParam], DurationParam.parse("15m"))
+  val pollingStrategy: Config = params.getNestedOrGetEmpty("polling_strategy")
 
   override def runTask(): TaskResult = {
     val subTasks: Config = cf.create()
@@ -52,6 +53,7 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
       subTask.set("cluster", cluster)
       subTask.set("tasks", "${last_ecs_task_run.task_arns}")
       subTask.set("timeout", timeout.toString)
+      subTask.set("polling_strategy", pollingStrategy)
     }
   }
 
