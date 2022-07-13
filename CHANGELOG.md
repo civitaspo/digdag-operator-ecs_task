@@ -1,3 +1,7 @@
+0.1.5 (2022-07-13)
+==================
+* [New Feature] [#85](https://github.com/civitaspo/digdag-operator-ecs_task/pull/85) Add pollingStrategy for RunOperator. @tangbamiinh++
+
 0.1.4 (2021-07-27)
 ==================
 * [New Feature] [#79](https://github.com/civitaspo/digdag-operator-ecs_task/pull/79) Support dependsOn. @shoot16625++
