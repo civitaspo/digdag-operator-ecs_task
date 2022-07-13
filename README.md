@@ -207,6 +207,7 @@ In addition, the below configurations exist.
 - **result_s3_uri**: The S3 uri for the task result. (string, optional)
   - **NOTE**: This configuration is used by `ecs_task.result>` operator, so the result content must follow the rule.
 - **timeout**: Timeout duration for the task. (`DurationParam`, default: `15m`)
+- **polling_strategy**: The polling strategy settings of wait. The configuration is the same as `ecs_task.wait>`'s one. (map, optional)
 
 ## Configuration for `ecs_task.wait>` operator
 
