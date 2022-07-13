@@ -54,7 +54,6 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
       subTask.set("tasks", "${last_ecs_task_run.task_arns}")
       subTask.set("timeout", timeout.toString)
       if (pollingStrategy.isPresent) subTask.set("polling_strategy", pollingStrategy.get())
-      subTask
     }
   }
 
@@ -65,7 +64,7 @@ class EcsTaskRunOperator(operatorName: String, context: OperatorContext, systemC
     }
   }
 
-  protected def withDefaultSubTask(f: Config => Config): Config = {
+  protected def withDefaultSubTask(f: Config => Unit): Config = {
     val subTask: Config = cf.create()
 
     subTask.set("auth_method", aws.conf.authMethod)
