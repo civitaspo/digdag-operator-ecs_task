@@ -5,9 +5,10 @@ import com.amazonaws.services.ecs.model.{
   ContainerDependency,
   Device,
   DockerVolumeConfiguration,
-  EFSVolumeConfiguration,
   EFSAuthorizationConfig,
+  EFSVolumeConfiguration,
   EphemeralStorage,
+  FirelensConfiguration,
   HealthCheck,
   HostEntry,
   HostVolumeProperties,
@@ -15,12 +16,12 @@ import com.amazonaws.services.ecs.model.{
   KeyValuePair,
   LinuxParameters,
   LogConfiguration,
-  FirelensConfiguration,
   MountPoint,
   PortMapping,
   RegisterTaskDefinitionRequest,
   RegisterTaskDefinitionResult,
   RepositoryCredentials,
+  RuntimePlatform,
   Secret,
   SystemControl,
   Tag,
@@ -60,6 +61,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     val placementConstraints: Seq[TaskDefinitionPlacementConstraint] =
       c.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get).toSeq
     val requiresCompatibilities: Seq[String] = c.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
+    val runtimePlatform: Optional[RuntimePlatform] = configureRuntimePlatform(c.parseNestedOrGetEmpty("runtime_platform"))
     val tags: Seq[Tag] =
       c.getMapOrEmpty("tags", classOf[String], classOf[String]).asScala.map((t: (String, String)) => new Tag().withKey(t._1).withValue(t._2)).toSeq
     val taskRoleArn: Optional[String] = c.getOptional("task_role_arn", classOf[String])
@@ -76,6 +78,7 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     if (pidMode.isPresent) throw new UnsupportedOperationException("Currently aws-java-sdk does not support pid_mode.")
     if (placementConstraints.nonEmpty) req.setPlacementConstraints(placementConstraints.asJava)
     if (requiresCompatibilities.nonEmpty) req.setRequiresCompatibilities(requiresCompatibilities.asJava)
+    if (runtimePlatform.isPresent) req.setRuntimePlatform(runtimePlatform.get)
     if (tags.nonEmpty) req.setTags(tags.asJava)
     if (taskRoleArn.isPresent) req.setTaskRoleArn(taskRoleArn.get)
     if (volumes.nonEmpty) req.setVolumes(volumes.asJava)
@@ -341,6 +344,19 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
     rc.setCredentialsParameter(credentialsParameter)
 
     Optional.of(rc)
+  }
+
+  protected def configureRuntimePlatform(c: Config): Optional[RuntimePlatform] = {
+    if (c.isEmpty) return Optional.absent()
+
+    val cpuArchitecture: Optional[String] = c.getOptional("cpu_architecture", classOf[String])
+    val operatingSystemFamily: Optional[String] = c.getOptional("operating_system_family", classOf[String])
+
+    val rp: RuntimePlatform = new RuntimePlatform()
+    if (cpuArchitecture.isPresent) rp.setCpuArchitecture(cpuArchitecture.get)
+    if (operatingSystemFamily.isPresent) rp.setOperatingSystemFamily(operatingSystemFamily.get)
+
+    Optional.of(rp)
   }
 
   protected def configureSecrets(c: Config): Optional[Secret] = {
