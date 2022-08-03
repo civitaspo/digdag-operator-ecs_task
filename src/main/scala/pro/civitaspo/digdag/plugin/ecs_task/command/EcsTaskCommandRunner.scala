@@ -73,6 +73,7 @@ case class EcsTaskCommandRunner(
   // val placementConstraints: Seq[TaskDefinitionPlacementConstraint] = params.parseListOrGetEmpty("placement_constraints", classOf[Config]).asScala.map(configureTaskDefinitionPlacementConstraint).map(_.get)
   val requiresCompatibilities
       : Seq[String] = params.parseListOrGetEmpty("requires_compatibilities", classOf[String]).asScala.toSeq // Valid Values: EC2 | FARGATE
+  val runtimePlatform: Optional[Config] = params.getOptionalNested("runtime_platform")
   // NOTE: Use the same var as `ecs_task.run>`'s one.
   // val tags: Optional[Config] = params.getOptionalNested("tags")
   val taskRoleArn: Optional[String] = params.getOptional("task_role_arn", classOf[String])
@@ -238,6 +239,7 @@ case class EcsTaskCommandRunner(
     c.setOptional("network_mode", networkMode)
     c.setOptional("pid_mode", pidMode)
     c.set("requires_compatibilities", requiresCompatibilities.asJava)
+    c.setOptional("runtime_platform", runtimePlatform)
     c.setOptional("tags", tags)
     c.setOptional("task_role_arn", taskRoleArn)
     c.set("volumes", volumes.asJava)
