@@ -349,12 +349,12 @@ class EcsTaskRegisterOperator(operatorName: String, context: OperatorContext, sy
   protected def configureRuntimePlatform(c: Config): Optional[RuntimePlatform] = {
     if (c.isEmpty) return Optional.absent()
 
-    val cpuArchitecture: String = c.get("cpu_architecture", classOf[String])
-    val operatingSystemFamily: String = c.get("operating_system_family", classOf[String])
+    val cpuArchitecture: Optional[String] = c.getOptional("cpu_architecture", classOf[String])
+    val operatingSystemFamily: Optional[String] = c.getOptional("operating_system_family", classOf[String])
 
     val rp: RuntimePlatform = new RuntimePlatform()
-    rp.setCpuArchitecture(cpuArchitecture)
-    rp.setOperatingSystemFamily(operatingSystemFamily)
+    if (cpuArchitecture.isPresent) rp.setCpuArchitecture(cpuArchitecture.get)
+    if (operatingSystemFamily.isPresent) rp.setOperatingSystemFamily(operatingSystemFamily.get)
 
     Optional.of(rp)
   }
